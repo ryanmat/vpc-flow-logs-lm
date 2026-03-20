@@ -14,7 +14,7 @@ from io import BytesIO
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "azure-function", "vnet-flow-forwarder"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "function", "vnet-flow-forwarder"))
 
 from lm_ingest import (
     build_lmv1_signature,
@@ -37,7 +37,7 @@ TEST_PAYLOAD = json.dumps([{"msg": "test log", "_lm.resourceId": {}}])
 class TestBuildLmv1Signature:
     """Test LMv1 HMAC-SHA256 signature construction."""
 
-    def test_signature_is_base64_of_hex_digest(self):
+    def test_signature_is_base64_of_raw_digest(self):
         epoch_ms = "1706886400000"
         sig = build_lmv1_signature(
             access_key=TEST_ACCESS_KEY,
@@ -46,14 +46,14 @@ class TestBuildLmv1Signature:
             body=TEST_PAYLOAD,
             resource_path=LM_INGEST_PATH,
         )
-        # Manually compute expected signature
+        # Manually compute expected signature: base64(HMAC-SHA256(...).digest())
         request_vars = "POST" + epoch_ms + TEST_PAYLOAD + LM_INGEST_PATH
-        hex_digest = hmac.new(
+        digest = hmac.new(
             TEST_ACCESS_KEY.encode("utf-8"),
             msg=request_vars.encode("utf-8"),
             digestmod=hashlib.sha256,
-        ).hexdigest()
-        expected = base64.b64encode(hex_digest.encode("utf-8")).decode("utf-8")
+        ).digest()
+        expected = base64.b64encode(digest).decode("utf-8")
         assert sig == expected
 
     def test_different_bodies_produce_different_sigs(self):
@@ -126,7 +126,7 @@ class TestSendBatch:
             access_id=TEST_ACCESS_ID,
             access_key=TEST_ACCESS_KEY,
         )
-        assert result is True
+        assert result == 202
 
         # Verify the request was made
         call_args = mock_urlopen.call_args
@@ -154,7 +154,7 @@ class TestSendBatch:
         )
         entries = [{"msg": "test", "_lm.resourceId": {}}]
         result = send_batch(entries, TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY)
-        assert result is False
+        assert result == 500
 
 
 class TestSendWithRetry:
@@ -162,7 +162,7 @@ class TestSendWithRetry:
 
     @patch("lm_ingest.send_batch")
     def test_succeeds_on_first_attempt(self, mock_send):
-        mock_send.return_value = True
+        mock_send.return_value = 202
         result = send_with_retry(
             [{"msg": "test"}], TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY,
             max_retries=3, retry_base_delay=0.01,
@@ -171,8 +171,8 @@ class TestSendWithRetry:
         assert mock_send.call_count == 1
 
     @patch("lm_ingest.send_batch")
-    def test_retries_on_failure(self, mock_send):
-        mock_send.side_effect = [False, False, True]
+    def test_retries_on_5xx(self, mock_send):
+        mock_send.side_effect = [500, 500, 202]
         result = send_with_retry(
             [{"msg": "test"}], TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY,
             max_retries=3, retry_base_delay=0.01,
@@ -182,10 +182,30 @@ class TestSendWithRetry:
 
     @patch("lm_ingest.send_batch")
     def test_gives_up_after_max_retries(self, mock_send):
-        mock_send.return_value = False
+        mock_send.return_value = 500
         result = send_with_retry(
             [{"msg": "test"}], TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY,
             max_retries=2, retry_base_delay=0.01,
         )
         assert result is False
         assert mock_send.call_count == 3  # initial + 2 retries
+
+    @patch("lm_ingest.send_batch")
+    def test_does_not_retry_on_4xx(self, mock_send):
+        mock_send.return_value = 401
+        result = send_with_retry(
+            [{"msg": "test"}], TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY,
+            max_retries=3, retry_base_delay=0.01,
+        )
+        assert result is False
+        assert mock_send.call_count == 1
+
+    @patch("lm_ingest.send_batch")
+    def test_retries_on_429(self, mock_send):
+        mock_send.side_effect = [429, 429, 202]
+        result = send_with_retry(
+            [{"msg": "test"}], TEST_COMPANY, TEST_ACCESS_ID, TEST_ACCESS_KEY,
+            max_retries=3, retry_base_delay=0.01,
+        )
+        assert result is True
+        assert mock_send.call_count == 3

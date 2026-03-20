@@ -6,6 +6,7 @@ import hashlib
 import logging
 import re
 
+from azure.core.exceptions import ResourceNotFoundError
 from flow_parser import parse_flow_records_from_json
 
 logger = logging.getLogger(__name__)
@@ -117,7 +118,7 @@ def get_watermark(table_client, blob_key):
             row_key=blob_key,
         )
         return entity.get("block_count", 0)
-    except Exception:
+    except ResourceNotFoundError:
         return 0
 
 

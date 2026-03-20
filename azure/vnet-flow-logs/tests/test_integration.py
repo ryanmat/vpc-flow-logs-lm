@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "azure-function", "vnet-flow-forwarder"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "function", "vnet-flow-forwarder"))
 
 STORAGE_CONN_STR = os.environ.get("AZURE_STORAGE_CONNECTION_STRING", "")
 FLOW_LOG_CONTAINER = "insights-logs-flowlogflowevent"

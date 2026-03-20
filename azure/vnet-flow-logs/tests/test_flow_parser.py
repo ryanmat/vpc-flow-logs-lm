@@ -8,7 +8,7 @@ import os
 import pytest
 
 # Add the azure function source to the path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "azure-function", "vnet-flow-forwarder"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "function", "vnet-flow-forwarder"))
 
 from flow_parser import (
     parse_flow_tuple,

@@ -7,6 +7,7 @@ import os
 
 import azure.functions as func
 from azure.storage.blob import BlobServiceClient
+from azure.core.exceptions import ResourceExistsError
 from azure.data.tables import TableServiceClient
 
 from block_reader import (
@@ -91,7 +92,7 @@ def vnet_flow_processor(event: func.EventGridEvent):
     # Ensure watermark table exists
     try:
         table_client.create_table()
-    except Exception:
+    except ResourceExistsError:
         pass  # Table already exists
 
     # Read watermark and fetch new blocks
@@ -111,8 +112,11 @@ def vnet_flow_processor(event: func.EventGridEvent):
     entries = parse_json_fragments(data, vnet_resource_id, device_display_name=DEVICE_DISPLAY_NAME)
 
     if not entries:
-        logger.info("No flow entries parsed from new blocks, updating watermark")
-        set_watermark(table_client, blob_key, new_count)
+        if not data or not data.strip():
+            logger.info("No flow entries in empty blocks, advancing watermark")
+            set_watermark(table_client, blob_key, new_count)
+        else:
+            logger.error("Parse produced no entries from %d bytes of block data, watermark NOT advanced", len(data))
         return
 
     logger.info("Parsed %d flow entries from %d new blocks", len(entries), new_count - last_count)
