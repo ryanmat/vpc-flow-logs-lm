@@ -1,0 +1,15 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "FUNCTIONS_WORKER_RUNTIME": "python",
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "LM_COMPANY": "your_company_name",
+    "LM_ACCESS_ID": "your_access_id",
+    "LM_ACCESS_KEY": "your_access_key",
+    "AZURE_STORAGE_CONNECTION_STRING": "DefaultEndpointsProtocol=https;AccountName=rmazurestorage;...",
+    "WATERMARK_TABLE_NAME": "vnetflowwatermarks",
+    "TARGET_VNET_RESOURCE_ID": "/subscriptions/your-sub-id/resourceGroups/your-rg/providers/Microsoft.Network/virtualNetworks/your-vnet",
+    "LOG_LEVEL": "INFO",
+    "BATCH_SIZE_LIMIT": "7340032"
+  }
+}

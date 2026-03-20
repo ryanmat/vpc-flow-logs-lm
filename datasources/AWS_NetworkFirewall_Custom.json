@@ -1,0 +1,43 @@
+{
+  "name": "AWS_NetworkFirewall_Custom",
+  "displayName": "AWS Network Firewall",
+  "description": "Collects AWS Network Firewall packet metrics from CloudWatch per AZ. Tracks dropped, passed, received with drop rate.",
+  "appliesTo": "system.aws.resourcetype == \"network-firewall\"",
+  "collectMethod": "awscloudwatch",
+  "group": "AWS",
+  "tags": "kpmg,aws,network-firewall,security",
+  "collectInterval": 300,
+  "hasMultiInstances": true,
+  "collectorAttribute": {
+    "name": "awscloudwatch"
+  },
+  "dataPoints": [
+    {
+      "name": "DroppedPackets",
+      "description": "Packets dropped by the firewall",
+      "dataType": 7,
+      "rawDataFieldName": "DroppedPackets>Sum"
+    },
+    {
+      "name": "PassedPackets",
+      "description": "Packets passed through the firewall",
+      "dataType": 7,
+      "rawDataFieldName": "PassedPackets>Sum"
+    },
+    {
+      "name": "ReceivedPackets",
+      "description": "Total packets received by the firewall",
+      "dataType": 7,
+      "rawDataFieldName": "ReceivedPackets>Sum"
+    },
+    {
+      "name": "DropRate",
+      "description": "Percentage of packets dropped",
+      "dataType": 7,
+      "maxValue": "100",
+      "minValue": "0",
+      "alertExpr": "> 50 75 90",
+      "alertBody": "High firewall drop rate on ##INSTANCE## (##VALUE##%)"
+    }
+  ]
+}

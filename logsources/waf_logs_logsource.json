@@ -1,0 +1,114 @@
+{
+  "name": "KPMG_WAF_Logs",
+  "description": "Webhook LogSource for AWS WAF logs. Uses Webhook Attribute extraction on pre-parsed fields from the Lambda forwarder.",
+  "type": "webhook",
+  "sourceName": "waf_logs",
+  "filters": {
+    "matchType": "ALL",
+    "conditions": [
+      {
+        "attribute": "SourceName",
+        "comparison": "Equal",
+        "value": "waf_logs"
+      }
+    ]
+  },
+  "logFields": [
+    {
+      "method": "Webhook Attribute",
+      "key": "action",
+      "value": "action",
+      "comment": "WAF action: ALLOW, BLOCK, COUNT, CAPTCHA"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "webaclId",
+      "value": "webaclId",
+      "comment": "Full ARN of the Web ACL"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "terminatingRuleId",
+      "value": "terminatingRuleId",
+      "comment": "Rule that terminated the request evaluation"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "terminatingRuleType",
+      "value": "terminatingRuleType",
+      "comment": "Type of terminating rule (REGULAR, RATE_BASED, GROUP)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "clientIp",
+      "value": "clientIp",
+      "comment": "Source IP of the request"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "country",
+      "value": "country",
+      "comment": "Country code of the request origin"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "uri",
+      "value": "uri",
+      "comment": "Request URI path"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "httpMethod",
+      "value": "httpMethod",
+      "comment": "HTTP method (GET, POST, etc.)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "log_level",
+      "value": "Level",
+      "comment": "Log level derived from WAF action: BLOCK=warn, else=info"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "resource_type",
+      "value": "resourceType",
+      "comment": "Resource type label (AWS WAF WebACL) sent from Lambda"
+    },
+    {
+      "method": "Static",
+      "key": "source_type",
+      "value": "waf_logs",
+      "comment": "Identifies log source type for queries"
+    }
+  ],
+  "resourceMapping": {
+    "matchType": "OR",
+    "mappings": [
+      {
+        "method": "Webhook Attribute",
+        "key": "aws.arn",
+        "value": "webaclId",
+        "comment": "Map to WAF Web ACL resource by ARN (custom property, not system.aws.arn which requires cloud discovery)"
+      }
+    ]
+  },
+  "lambdaConfig": {
+    "functionName": "KPMGWebhookForwarderWAF",
+    "stackName": "kpmg-webhook-forwarder-waf",
+    "logGroup": "aws-waf-logs-kpmg",
+    "reservedConcurrency": 1,
+    "comment": "Dedicated Lambda for WAF logs with isolated concurrency"
+  },
+  "portalSetupInstructions": {
+    "steps": [
+      "Navigate to Modules > My Module Toolbox > Add > LogSource",
+      "Name: KPMG_WAF_Logs",
+      "Type: Webhook Events",
+      "Add Filter: SourceName Equal waf_logs (Match ALL)",
+      "Add Log Fields using Webhook Attribute method (key=field name in LM, value=JSON key from webhook payload)",
+      "Add log_level field: Webhook Attribute, key=log_level, value=Level",
+      "Add Resource Mapping: Webhook Attribute, key=system.aws.arn, value=webaclId",
+      "Save the LogSource"
+    ]
+  }
+}
