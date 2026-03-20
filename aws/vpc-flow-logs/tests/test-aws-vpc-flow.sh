@@ -50,14 +50,17 @@ check "VPCFlowLogsRole has VPCFlowLogsPolicy" \
         --policy-name VPCFlowLogsPolicy \
         $PROFILE_FLAG
 
-# Test 4: LMLogsForwarder Lambda exists
-check "LMLogsForwarder Lambda function exists" \
-    aws lambda get-function --function-name LMLogsForwarder $PROFILE_FLAG
+# Test 4: WebhookForwarderVPC Lambda exists
+check "WebhookForwarderVPC Lambda function exists" \
+    aws lambda get-function --function-name WebhookForwarderVPC $PROFILE_FLAG
 
-# Test 5: CloudFormation stack backing the Lambda is healthy
-# The Lambda may be from our stack (lm-logs-forwarder) or a pre-existing one (lm-forwarder)
+# Test 5: WebhookForwarderWAF Lambda exists
+check "WebhookForwarderWAF Lambda function exists" \
+    aws lambda get-function --function-name WebhookForwarderWAF $PROFILE_FLAG
+
+# Test 6: CloudFormation stacks backing the Lambdas are healthy
 STACK_FOUND=0
-for STACK_CANDIDATE in lm-logs-forwarder; do
+for STACK_CANDIDATE in webhook-forwarder-vpc webhook-forwarder-waf; do
     STACK_STATUS=$(aws cloudformation describe-stacks \
         --stack-name "$STACK_CANDIDATE" \
         --query 'Stacks[0].StackStatus' \
@@ -66,12 +69,11 @@ for STACK_CANDIDATE in lm-logs-forwarder; do
     if [ "$STACK_STATUS" = "CREATE_COMPLETE" ] || [ "$STACK_STATUS" = "UPDATE_COMPLETE" ]; then
         RESULTS+=("[PASS] CloudFormation stack $STACK_CANDIDATE ($STACK_STATUS)")
         PASS=$((PASS + 1))
-        STACK_FOUND=1
-        break
+        STACK_FOUND=$((STACK_FOUND + 1))
     fi
 done
 if [ "$STACK_FOUND" -eq 0 ]; then
-    RESULTS+=("[FAIL] No CloudFormation stack found for LMLogsForwarder")
+    RESULTS+=("[FAIL] No CloudFormation stacks found for webhook forwarders")
     FAIL=$((FAIL + 1))
 fi
 

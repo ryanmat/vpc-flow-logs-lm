@@ -18,6 +18,7 @@ try {
     def cmd = ["/usr/local/bin/aws", "cloudwatch", "list-metrics",
                "--namespace", "AWS/WAFV2",
                "--metric-name", "AllowedRequests",
+               "--dimensions", "Name=WebACL,Value=${webAclName}",
                "--region", region,
                "--output", "json"]
 

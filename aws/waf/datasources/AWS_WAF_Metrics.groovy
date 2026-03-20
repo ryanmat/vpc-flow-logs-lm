@@ -8,12 +8,12 @@ def webAclName = hostProps.get("aws.webacl.name")
 def ruleName = instanceProps.get("wildvalue")
 
 if (!webAclName) {
-    println "ERROR: Missing aws.webacl.name property"
+    System.err.println "ERROR: Missing aws.webacl.name property"
     return 1
 }
 
 if (!ruleName) {
-    println "ERROR: Missing wildvalue (rule name) in instanceProps"
+    System.err.println "ERROR: Missing wildvalue (rule name) in instanceProps"
     return 1
 }
 
