@@ -1,0 +1,131 @@
+{
+  "name": "VNet_Flow_Logs",
+  "description": "Azure VNet Flow Log entries forwarded via the vnet-flow-forwarder Azure Function to the LM REST Ingest API. Uses _lm.resourceId for resource mapping instead of Webhook Attribute extraction.",
+  "type": "rest_ingest_api",
+  "ingestEndpoint": "/rest/log/ingest",
+  "authMethod": "LMv1 HMAC-SHA256",
+  "sourceName": "vnet_flow_logs",
+  "logFields": [
+    {
+      "key": "srcIP",
+      "description": "Source IP address of the flow"
+    },
+    {
+      "key": "dstIP",
+      "description": "Destination IP address of the flow"
+    },
+    {
+      "key": "srcPort",
+      "description": "Source port number"
+    },
+    {
+      "key": "dstPort",
+      "description": "Destination port number"
+    },
+    {
+      "key": "protocol",
+      "description": "Protocol name (TCP, UDP, ICMP, or IANA number)"
+    },
+    {
+      "key": "direction",
+      "description": "Flow direction: inbound or outbound"
+    },
+    {
+      "key": "flowState",
+      "description": "Flow state: begin, continue, end, or deny"
+    },
+    {
+      "key": "encryption",
+      "description": "Encryption status (NX=unencrypted, X=encrypted, plus variants)"
+    },
+    {
+      "key": "bytesSrcDst",
+      "description": "Bytes sent from source to destination"
+    },
+    {
+      "key": "bytesDstSrc",
+      "description": "Bytes sent from destination to source"
+    },
+    {
+      "key": "pktsSrcDst",
+      "description": "Packets sent from source to destination"
+    },
+    {
+      "key": "pktsDstSrc",
+      "description": "Packets sent from destination to source"
+    },
+    {
+      "key": "macAddress",
+      "description": "MAC address of the NIC (from blob path partition)"
+    },
+    {
+      "key": "rule",
+      "description": "NSG or AVNM rule that evaluated the traffic"
+    },
+    {
+      "key": "Level",
+      "description": "Log level: warn for DENY flows, info for all others"
+    },
+    {
+      "key": "resourceType",
+      "description": "Static value: Azure VNet Flow Logs"
+    },
+    {
+      "key": "source_type",
+      "description": "Static value: vnet_flow_logs"
+    }
+  ],
+  "resourceMapping": {
+    "method": "_lm.resourceId in payload",
+    "property": "azure.resourceid",
+    "description": "Maps to the Azure VNet resource by its full ARM resource ID. The Azure Function sets _lm.resourceId.azure.resourceid to the VNet's resource ID extracted from the flow log blob metadata.",
+    "example": {
+      "_lm.resourceId": {
+        "azure.resourceid": "/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.Network/virtualNetworks/{vnet}"
+      }
+    }
+  },
+  "samplePayload": {
+    "msg": "ALLOW TCP 10.0.0.4:443 > 168.62.32.14:52362 outbound 1234B/5678B",
+    "_lm.resourceId": {
+      "azure.resourceid": "/subscriptions/1eae27d8-cbaa-43fd-9f60-ce33de2c69b6/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet"
+    },
+    "timestamp": "2024-02-02T16:00:00.000Z",
+    "Level": "info",
+    "srcIP": "10.0.0.4",
+    "dstIP": "168.62.32.14",
+    "srcPort": "443",
+    "dstPort": "52362",
+    "protocol": "TCP",
+    "direction": "outbound",
+    "flowState": "end",
+    "encryption": "NX",
+    "bytesSrcDst": "1234",
+    "bytesDstSrc": "5678",
+    "pktsSrcDst": "10",
+    "pktsDstSrc": "8",
+    "macAddress": "000D3A123456",
+    "rule": "DefaultRule_AllowInternetOutBound",
+    "resourceType": "Azure VNet Flow Logs",
+    "source_type": "vnet_flow_logs"
+  },
+  "azureFunctionConfig": {
+    "functionAppName": "vnet-flow-forwarder",
+    "triggerType": "EventGrid",
+    "eventType": "Microsoft.Storage.BlobCreated",
+    "apiFilter": "PutBlockList",
+    "containerFilter": "insights-logs-flowlogflowevent",
+    "runtime": "Python 3.11",
+    "deduplication": "Block-level watermarks in Azure Table Storage",
+    "batchSize": "Up to 7MB per LM API request (~14,000 flow entries)"
+  },
+  "portalSetupInstructions": {
+    "steps": [
+      "No LogSource configuration needed in the LM portal.",
+      "The REST Ingest API uses _lm.resourceId to map logs directly to devices.",
+      "Ensure the VNet (CTA-vnet) is discovered via Azure Cloud Monitoring integration.",
+      "Verify azure.resourceid property exists on the VNet device in LM.",
+      "Logs will appear in the Logs tab of the VNet device after the Function processes its first blob."
+    ]
+  }
+}

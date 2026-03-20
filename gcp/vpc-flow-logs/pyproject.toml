@@ -1,0 +1,22 @@
+[project]
+name = "gcp-vpc-flowlogs-lm"
+version = "0.1.0"
+description = "GCP VPC Flow Logs relay to LogicMonitor via Cloud Function"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "functions-framework>=3.10.1",
+    "google-cloud-secret-manager>=2.26.0",
+    "requests>=2.32.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-mock>=3.15.1",
+    "responses>=0.26.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["cloud_function/tests"]
+pythonpath = ["."]

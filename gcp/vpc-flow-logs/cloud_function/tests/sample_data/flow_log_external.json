@@ -1,0 +1,33 @@
+{
+  "connection": {
+    "src_ip": "203.0.113.45",
+    "dest_ip": "10.128.0.22",
+    "src_port": 61423,
+    "dest_port": 443,
+    "protocol": 6
+  },
+  "dest_instance": {
+    "vm_name": "api-backend-02",
+    "zone": "us-central1-b",
+    "region": "us-central1",
+    "project_id": "acme-prod-123456"
+  },
+  "dest_vpc": {
+    "vpc_name": "acme-prod-vpc",
+    "subnetwork_name": "api-tier-subnet",
+    "project_id": "acme-prod-123456"
+  },
+  "src_location": {
+    "continent": "America",
+    "country": "usa",
+    "region": "us-east4",
+    "city": "ashburn",
+    "asn": 14618
+  },
+  "bytes_sent": "8721",
+  "packets_sent": "18",
+  "start_time": "2026-02-26T12:01:00.000000Z",
+  "end_time": "2026-02-26T12:01:05.000000Z",
+  "rtt_msec": "28",
+  "reporter": "DEST"
+}

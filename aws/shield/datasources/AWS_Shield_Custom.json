@@ -1,0 +1,42 @@
+{
+  "name": "AWS_Shield_Custom",
+  "displayName": "AWS Shield Advanced",
+  "description": "Collects AWS Shield Advanced DDoS protection metrics from CloudWatch. Alerts on DDoS detection.",
+  "appliesTo": "system.aws.accountid =~ \".+\"",
+  "collectMethod": "awscloudwatch",
+  "group": "AWS",
+  "tags": "aws,shield,ddos,security",
+  "collectInterval": 300,
+  "hasMultiInstances": true,
+  "collectorAttribute": {
+    "name": "awscloudwatch"
+  },
+  "dataPoints": [
+    {
+      "name": "DDoSDetected",
+      "description": "DDoS attack detected (1=active)",
+      "dataType": 7,
+      "rawDataFieldName": "DDoSDetected>Maximum",
+      "alertExpr": "> 0 0 0",
+      "alertBody": "DDoS attack detected on ##INSTANCE##"
+    },
+    {
+      "name": "DDoSAttackBitsPerSecond",
+      "description": "Attack traffic in bits/sec",
+      "dataType": 7,
+      "rawDataFieldName": "DDoSAttackBitsPerSecond>Maximum"
+    },
+    {
+      "name": "DDoSAttackPktsPerSec",
+      "description": "Attack traffic in packets/sec",
+      "dataType": 7,
+      "rawDataFieldName": "DDoSAttackPacketsPerSecond>Maximum"
+    },
+    {
+      "name": "DDoSAttackReqsPerSec",
+      "description": "Attack traffic in requests/sec (L7)",
+      "dataType": 7,
+      "rawDataFieldName": "DDoSAttackRequestsPerSecond>Maximum"
+    }
+  ]
+}

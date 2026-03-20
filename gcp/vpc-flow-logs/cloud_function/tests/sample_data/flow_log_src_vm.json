@@ -1,0 +1,37 @@
+{
+  "connection": {
+    "src_ip": "10.128.0.15",
+    "dest_ip": "10.128.0.22",
+    "src_port": 443,
+    "dest_port": 52340,
+    "protocol": 6
+  },
+  "src_instance": {
+    "vm_name": "web-frontend-01",
+    "zone": "us-central1-a",
+    "region": "us-central1",
+    "project_id": "acme-prod-123456"
+  },
+  "dest_instance": {
+    "vm_name": "api-backend-02",
+    "zone": "us-central1-b",
+    "region": "us-central1",
+    "project_id": "acme-prod-123456"
+  },
+  "src_vpc": {
+    "vpc_name": "acme-prod-vpc",
+    "subnetwork_name": "web-tier-subnet",
+    "project_id": "acme-prod-123456"
+  },
+  "dest_vpc": {
+    "vpc_name": "acme-prod-vpc",
+    "subnetwork_name": "api-tier-subnet",
+    "project_id": "acme-prod-123456"
+  },
+  "bytes_sent": "15234",
+  "packets_sent": "42",
+  "start_time": "2026-02-26T12:00:00.000000Z",
+  "end_time": "2026-02-26T12:00:05.000000Z",
+  "rtt_msec": "3",
+  "reporter": "SRC"
+}

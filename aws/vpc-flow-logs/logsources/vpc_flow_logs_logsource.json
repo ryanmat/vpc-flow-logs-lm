@@ -1,0 +1,132 @@
+{
+  "name": "VPC_Flow_Logs",
+  "description": "Webhook LogSource for AWS VPC Flow Logs. Uses Webhook Attribute extraction on pre-parsed fields from the Lambda forwarder.",
+  "type": "webhook",
+  "sourceName": "vpc_flow_logs",
+  "filters": {
+    "matchType": "ALL",
+    "conditions": [
+      {
+        "attribute": "SourceName",
+        "comparison": "Equal",
+        "value": "vpc_flow_logs"
+      }
+    ]
+  },
+  "logFields": [
+    {
+      "method": "Webhook Attribute",
+      "key": "instance_id",
+      "value": "instance_id",
+      "comment": "EC2 instance ID (first field in flow log)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "srcaddr",
+      "value": "srcaddr",
+      "comment": "Source IP address"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "dstaddr",
+      "value": "dstaddr",
+      "comment": "Destination IP address"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "srcport",
+      "value": "srcport",
+      "comment": "Source port"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "dstport",
+      "value": "dstport",
+      "comment": "Destination port"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "protocol",
+      "value": "protocol",
+      "comment": "Protocol number (6=TCP, 17=UDP, 1=ICMP)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "packets",
+      "value": "packets",
+      "comment": "Packet count"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "bytes",
+      "value": "bytes",
+      "comment": "Byte count"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "action",
+      "value": "action",
+      "comment": "Firewall action (ACCEPT or REJECT)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "log_status",
+      "value": "log_status",
+      "comment": "Flow log capture status (OK, NODATA, SKIPDATA)"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "log_level",
+      "value": "Level",
+      "comment": "Log level derived from action: REJECT=warn, else=info"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "eni",
+      "value": "eni",
+      "comment": "ENI ID extracted from log stream name"
+    },
+    {
+      "method": "Webhook Attribute",
+      "key": "resource_type",
+      "value": "resourceType",
+      "comment": "Resource type label (AWS VPC Flow Logs) sent from Lambda"
+    },
+    {
+      "method": "Static",
+      "key": "source_type",
+      "value": "vpc_flow_logs",
+      "comment": "Identifies log source type for queries"
+    }
+  ],
+  "resourceMapping": {
+    "matchType": "OR",
+    "mappings": [
+      {
+        "method": "Webhook Attribute",
+        "key": "system.aws.instanceid",
+        "value": "instance_id",
+        "comment": "Map to EC2 instance by instance ID. Logs with '-' as instance ID (ENI-only traffic) will not map."
+      }
+    ]
+  },
+  "lambdaConfig": {
+    "functionName": "WebhookForwarderVPC",
+    "stackName": "webhook-forwarder-vpc",
+    "logGroup": "/aws/vpc/flowlogs",
+    "reservedConcurrency": 5,
+    "comment": "Dedicated Lambda for VPC flow logs with isolated concurrency"
+  },
+  "portalSetupInstructions": {
+    "steps": [
+      "Navigate to Modules > My Module Toolbox > Add > LogSource",
+      "Name: VPC_Flow_Logs",
+      "Type: Webhook Events",
+      "Add Filter: SourceName Equal vpc_flow_logs (Match ALL)",
+      "Add Log Fields using Webhook Attribute method (key=field name in LM, value=JSON key from webhook payload)",
+      "Add log_level field: Webhook Attribute, key=log_level, value=Level",
+      "Add Resource Mapping: Webhook Attribute, key=system.aws.instanceid, value=instance_id",
+      "Save the LogSource"
+    ]
+  }
+}

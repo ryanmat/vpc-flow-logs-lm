@@ -30,13 +30,13 @@ Portal: lmryanmatuszewski.logicmonitor.com
 
 ### AWS WAF Metrics (id: 11442196, Locator: AC26ZY)
 - Display Name: AWS WAF Metrics
-- AppliesTo: hasCategory("KPMG_WAF")
+- AppliesTo: hasCategory("AWS_WAF")
 - Collect Method: script (Groovy via AWS CLI on traditional collector)
 - Group: AWS WAF
 - Metrics: AllowedRequests, BlockedRequests, CountedRequests, PassedRequests per rule
 - Active Discovery: discovers individual WAF rules via CloudWatch list-metrics
 - Requires: aws.webacl.name and aws.region device properties, AWS CLI on collector
-- Status: Applied to device 279643 (KPMG POC WAF WebACL), pending AD cycle
+- Status: Applied to device 279643 (WAF WebACL), pending AD cycle
 
 ## Custom DataSources Needed (Blocked)
 

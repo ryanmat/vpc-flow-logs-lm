@@ -1,0 +1,5 @@
+# Description: Production dependencies for GCP Cloud Function deployment.
+# Description: Used by gcloud functions deploy to install packages in the runtime.
+functions-framework>=3.0.0
+google-cloud-secret-manager>=2.0.0
+requests>=2.28.0

@@ -1,0 +1,19 @@
+{
+  "specversion": "1.0",
+  "id": "evt-1122334455",
+  "source": "//pubsub.googleapis.com/projects/acme-prod-123456/topics/vpc-flowlogs-lm",
+  "type": "google.cloud.pubsub.topic.v1.messagePublished",
+  "datacontenttype": "application/json",
+  "time": "2026-02-26T12:01:06.000000Z",
+  "data": {
+    "message": {
+      "data": "eyJpbnNlcnRJZCI6ICJ4eXo3ODlnaGkwMTIiLCAibG9nTmFtZSI6ICJwcm9qZWN0cy9hY21lLXByb2QtMTIzNDU2L2xvZ3MvY29tcHV0ZS5nb29nbGVhcGlzLmNvbSUyRnZwY19mbG93cyIsICJyZXNvdXJjZSI6IHsidHlwZSI6ICJnY2Vfc3VibmV0d29yayIsICJsYWJlbHMiOiB7InByb2plY3RfaWQiOiAiYWNtZS1wcm9kLTEyMzQ1NiIsICJzdWJuZXR3b3JrX2lkIjogIjc4OTAxMjM0NTY3ODkwMTIzNDUiLCAic3VibmV0d29ya19uYW1lIjogImFwaS10aWVyLXN1Ym5ldCIsICJsb2NhdGlvbiI6ICJ1cy1jZW50cmFsMS1iIn19LCAidGltZXN0YW1wIjogIjIwMjYtMDItMjZUMTI6MDE6MDUuNjU0MzIxWiIsICJyZWNlaXZlVGltZXN0YW1wIjogIjIwMjYtMDItMjZUMTI6MDE6MDYuOTg3NjU0WiIsICJzZXZlcml0eSI6ICJERUZBVUxUIiwgImpzb25QYXlsb2FkIjogeyJjb25uZWN0aW9uIjogeyJzcmNfaXAiOiAiMjAzLjAuMTEzLjQ1IiwgImRlc3RfaXAiOiAiMTAuMTI4LjAuMjIiLCAic3JjX3BvcnQiOiA2MTQyMywgImRlc3RfcG9ydCI6IDQ0MywgInByb3RvY29sIjogNn0sICJkZXN0X2luc3RhbmNlIjogeyJ2bV9uYW1lIjogImFwaS1iYWNrZW5kLTAyIiwgInpvbmUiOiAidXMtY2VudHJhbDEtYiIsICJyZWdpb24iOiAidXMtY2VudHJhbDEiLCAicHJvamVjdF9pZCI6ICJhY21lLXByb2QtMTIzNDU2In0sICJkZXN0X3ZwYyI6IHsidnBjX25hbWUiOiAiYWNtZS1wcm9kLXZwYyIsICJzdWJuZXR3b3JrX25hbWUiOiAiYXBpLXRpZXItc3VibmV0IiwgInByb2plY3RfaWQiOiAiYWNtZS1wcm9kLTEyMzQ1NiJ9LCAic3JjX2xvY2F0aW9uIjogeyJjb250aW5lbnQiOiAiQW1lcmljYSIsICJjb3VudHJ5IjogInVzYSIsICJyZWdpb24iOiAidXMtZWFzdDQiLCAiY2l0eSI6ICJhc2hidXJuIiwgImFzbiI6IDE0NjE4fSwgImJ5dGVzX3NlbnQiOiAiODcyMSIsICJwYWNrZXRzX3NlbnQiOiAiMTgiLCAic3RhcnRfdGltZSI6ICIyMDI2LTAyLTI2VDEyOjAxOjAwLjAwMDAwMFoiLCAiZW5kX3RpbWUiOiAiMjAyNi0wMi0yNlQxMjowMTowNS4wMDAwMDBaIiwgInJ0dF9tc2VjIjogIjI4IiwgInJlcG9ydGVyIjogIkRFU1QifX0=",
+      "attributes": {
+        "logging.googleapis.com/timestamp": "2026-02-26T12:01:05.654321Z"
+      },
+      "messageId": "6543210987654321",
+      "publishTime": "2026-02-26T12:01:06.000000Z"
+    },
+    "subscription": "projects/acme-prod-123456/subscriptions/eventarc-vpc-flowlogs-sub-001"
+  }
+}

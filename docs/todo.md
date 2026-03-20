@@ -1,4 +1,4 @@
-# KPMG Logging POC - State Tracking
+# Log Integration POC - State Tracking
 
 ## Status Legend
 
@@ -7,6 +7,8 @@
 - [x] Complete
 - [!] Blocked
 - [-] Skipped (not needed)
+
+> Note: This tracker was originally created for the KPMG POC. Historical references to KPMG resources (stack names, function app names, device IDs) reflect the deployed environment and are preserved for accuracy.
 
 ---
 

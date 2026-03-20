@@ -1,0 +1,73 @@
+{
+  "connection": {
+    "src_ip": "10.128.1.50",
+    "dest_ip": "10.128.1.75",
+    "src_port": 8080,
+    "dest_port": 49812,
+    "protocol": 6
+  },
+  "src_instance": {
+    "vm_name": "gke-prod-cluster-node-pool-a1b2c3d4-wxyz",
+    "zone": "us-central1-a",
+    "region": "us-central1",
+    "project_id": "acme-prod-123456"
+  },
+  "dest_instance": {
+    "vm_name": "gke-prod-cluster-node-pool-e5f6g7h8-qrst",
+    "zone": "us-central1-b",
+    "region": "us-central1",
+    "project_id": "acme-prod-123456"
+  },
+  "src_vpc": {
+    "vpc_name": "acme-prod-vpc",
+    "subnetwork_name": "gke-subnet",
+    "project_id": "acme-prod-123456"
+  },
+  "dest_vpc": {
+    "vpc_name": "acme-prod-vpc",
+    "subnetwork_name": "gke-subnet",
+    "project_id": "acme-prod-123456"
+  },
+  "src_gke_details": {
+    "cluster": {
+      "cluster_name": "prod-cluster",
+      "cluster_location": "us-central1"
+    },
+    "pod": {
+      "pod_name": "frontend-7b8d9c6f4-xk2qm",
+      "pod_namespace": "web-tier"
+    },
+    "service": [
+      {
+        "service_name": "frontend-svc",
+        "service_namespace": "web-tier"
+      }
+    ]
+  },
+  "dest_gke_details": {
+    "cluster": {
+      "cluster_name": "prod-cluster",
+      "cluster_location": "us-central1"
+    },
+    "pod": {
+      "pod_name": "cart-api-5a4b3c2d1-mnop",
+      "pod_namespace": "commerce"
+    },
+    "service": [
+      {
+        "service_name": "cart-api-svc",
+        "service_namespace": "commerce"
+      },
+      {
+        "service_name": "cart-grpc-svc",
+        "service_namespace": "commerce"
+      }
+    ]
+  },
+  "bytes_sent": "52480",
+  "packets_sent": "96",
+  "start_time": "2026-02-26T12:02:00.000000Z",
+  "end_time": "2026-02-26T12:02:05.000000Z",
+  "rtt_msec": "1",
+  "reporter": "SRC"
+}

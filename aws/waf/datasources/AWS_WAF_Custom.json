@@ -1,0 +1,65 @@
+{
+  "name": "AWS WAF Metrics",
+  "displayName": "AWS WAF Metrics",
+  "description": "Collects AWS WAF request metrics from CloudWatch per Web ACL rule via Groovy script on traditional collector.",
+  "appliesTo": "hasCategory(\"AWS_WAF\")",
+  "collectMethod": "script",
+  "group": "AWS WAF",
+  "tags": "aws",
+  "collectInterval": 300,
+  "hasMultiInstances": true,
+  "collectorAttribute": {
+    "name": "script",
+    "scriptType": "embed",
+    "groovyScript": "see aws/waf/datasources/AWS_WAF_Metrics.groovy"
+  },
+  "autoDiscoveryConfig": {
+    "method": "ad_script",
+    "scheduleInterval": 15,
+    "groovyScript": "see aws/waf/datasources/AWS_WAF_Metrics_AD.groovy"
+  },
+  "dataPoints": [
+    {
+      "name": "AllowedRequests",
+      "description": "Requests allowed by WAF rules",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "AllowedRequests"
+    },
+    {
+      "name": "BlockedRequests",
+      "description": "Requests blocked by WAF rules",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "BlockedRequests",
+      "alertExpr": "> 25 50 100"
+    },
+    {
+      "name": "CountedRequests",
+      "description": "Requests counted by WAF rules (count action, not block/allow)",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "CountedRequests"
+    },
+    {
+      "name": "PassedRequests",
+      "description": "Requests that passed through (rule evaluated but no action taken)",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "PassedRequests"
+    }
+  ],
+  "portalInfo": {
+    "id": 11442196,
+    "locator": "AC26ZY",
+    "version": "1.1.0"
+  },
+  "deviceRequirements": {
+    "customProperties": {
+      "aws.webacl.name": "Name of the WAF Web ACL (e.g. my-webacl)",
+      "aws.region": "AWS region (e.g. us-west-2)",
+      "system.categories": "Must include AWS_WAF"
+    },
+    "collectorRequirements": "AWS CLI installed at /usr/local/bin/aws with IAM access to CloudWatch"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "specversion": "1.0",
+  "id": "evt-9876543210",
+  "source": "//pubsub.googleapis.com/projects/acme-prod-123456/topics/vpc-flowlogs-lm",
+  "type": "google.cloud.pubsub.topic.v1.messagePublished",
+  "datacontenttype": "application/json",
+  "time": "2026-02-26T12:00:06.000000Z",
+  "data": {
+    "message": {
+      "data": "eyJpbnNlcnRJZCI6ICJhYmMxMjNkZWY0NTYiLCAibG9nTmFtZSI6ICJwcm9qZWN0cy9hY21lLXByb2QtMTIzNDU2L2xvZ3MvY29tcHV0ZS5nb29nbGVhcGlzLmNvbSUyRnZwY19mbG93cyIsICJyZXNvdXJjZSI6IHsidHlwZSI6ICJnY2Vfc3VibmV0d29yayIsICJsYWJlbHMiOiB7InByb2plY3RfaWQiOiAiYWNtZS1wcm9kLTEyMzQ1NiIsICJzdWJuZXR3b3JrX2lkIjogIjc4OTAxMjM0NTY3ODkwMTIzNDUiLCAic3VibmV0d29ya19uYW1lIjogIndlYi10aWVyLXN1Ym5ldCIsICJsb2NhdGlvbiI6ICJ1cy1jZW50cmFsMS1hIn19LCAidGltZXN0YW1wIjogIjIwMjYtMDItMjZUMTI6MDA6MDUuMTIzNDU2WiIsICJyZWNlaXZlVGltZXN0YW1wIjogIjIwMjYtMDItMjZUMTI6MDA6MDYuNzg5MDEyWiIsICJzZXZlcml0eSI6ICJERUZBVUxUIiwgImpzb25QYXlsb2FkIjogeyJjb25uZWN0aW9uIjogeyJzcmNfaXAiOiAiMTAuMTI4LjAuMTUiLCAiZGVzdF9pcCI6ICIxMC4xMjguMC4yMiIsICJzcmNfcG9ydCI6IDQ0MywgImRlc3RfcG9ydCI6IDUyMzQwLCAicHJvdG9jb2wiOiA2fSwgInNyY19pbnN0YW5jZSI6IHsidm1fbmFtZSI6ICJ3ZWItZnJvbnRlbmQtMDEiLCAiem9uZSI6ICJ1cy1jZW50cmFsMS1hIiwgInJlZ2lvbiI6ICJ1cy1jZW50cmFsMSIsICJwcm9qZWN0X2lkIjogImFjbWUtcHJvZC0xMjM0NTYifSwgImRlc3RfaW5zdGFuY2UiOiB7InZtX25hbWUiOiAiYXBpLWJhY2tlbmQtMDIiLCAiem9uZSI6ICJ1cy1jZW50cmFsMS1iIiwgInJlZ2lvbiI6ICJ1cy1jZW50cmFsMSIsICJwcm9qZWN0X2lkIjogImFjbWUtcHJvZC0xMjM0NTYifSwgInNyY192cGMiOiB7InZwY19uYW1lIjogImFjbWUtcHJvZC12cGMiLCAic3VibmV0d29ya19uYW1lIjogIndlYi10aWVyLXN1Ym5ldCIsICJwcm9qZWN0X2lkIjogImFjbWUtcHJvZC0xMjM0NTYifSwgImRlc3RfdnBjIjogeyJ2cGNfbmFtZSI6ICJhY21lLXByb2QtdnBjIiwgInN1Ym5ldHdvcmtfbmFtZSI6ICJhcGktdGllci1zdWJuZXQiLCAicHJvamVjdF9pZCI6ICJhY21lLXByb2QtMTIzNDU2In0sICJieXRlc19zZW50IjogIjE1MjM0IiwgInBhY2tldHNfc2VudCI6ICI0MiIsICJzdGFydF90aW1lIjogIjIwMjYtMDItMjZUMTI6MDA6MDAuMDAwMDAwWiIsICJlbmRfdGltZSI6ICIyMDI2LTAyLTI2VDEyOjAwOjA1LjAwMDAwMFoiLCAicnR0X21zZWMiOiAiMyIsICJyZXBvcnRlciI6ICJTUkMifX0=",
+      "attributes": {
+        "logging.googleapis.com/timestamp": "2026-02-26T12:00:05.123456Z"
+      },
+      "messageId": "1234567890123456",
+      "publishTime": "2026-02-26T12:00:06.000000Z"
+    },
+    "subscription": "projects/acme-prod-123456/subscriptions/eventarc-vpc-flowlogs-sub-001"
+  }
+}

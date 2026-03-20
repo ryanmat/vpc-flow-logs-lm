@@ -1,8 +1,8 @@
-# KPMG Logging POC - Implementation Plan
+# Log Integration POC - Implementation Plan
 
 ## Overview
 
-This plan breaks down the KPMG network logging and cost attribution POC into small, iterative chunks that build on each other. Each phase contains discrete prompts for Claude Code to execute in a test-driven manner.
+This plan breaks down the multi-cloud log integration POC for Product Engineering into small, iterative chunks that build on each other. Each phase contains discrete prompts for Claude Code to execute in a test-driven manner.
 
 ---
 
@@ -15,11 +15,11 @@ This plan breaks down the KPMG network logging and cost attribution POC into sma
 ```text
 [Prompt 0.1: Project Structure Setup]
 
-Context: We are building a LogicMonitor-based network monitoring and cost attribution POC for KPMG Canada. The project involves ingesting flow logs from Azure VNet and AWS VPC into LM Logs, monitoring WAF/Shield/Network Firewall, and creating dashboards for egress cost attribution.
+Context: We are building a LogicMonitor-based network monitoring and cost attribution POC for Product Engineering. The project involves ingesting flow logs from Azure VNet and AWS VPC into LM Logs, monitoring WAF/Shield/Network Firewall, and creating dashboards for egress cost attribution.
 
 Task: Create the project directory structure with the following layout:
 
-kpmg-logging-poc/
+lm-log-integrations/
   scripts/
     aws/
     azure/
@@ -341,19 +341,19 @@ Task: Create scripts/aws/enable-waf-logging.sh that:
 
 1. Accepts parameters:
    - WEB_ACL_ARN (required): The WAF Web ACL to enable logging on
-   - LOG_GROUP_NAME (optional, default: aws-waf-logs-kpmg)
+   - LOG_GROUP_NAME (optional, default: aws-waf-logs)
 
 2. Creates a CloudWatch Log Group for WAF (name MUST start with "aws-waf-logs-"):
-   aws logs create-log-group --log-group-name "aws-waf-logs-kpmg"
+   aws logs create-log-group --log-group-name "aws-waf-logs"
 
 3. Sets retention to 7 days:
-   aws logs put-retention-policy --log-group-name "aws-waf-logs-kpmg" --retention-in-days 7
+   aws logs put-retention-policy --log-group-name "aws-waf-logs" --retention-in-days 7
 
 4. Enables WAF logging:
    aws wafv2 put-logging-configuration \
      --logging-configuration '{
        "ResourceArn": "'$WEB_ACL_ARN'",
-       "LogDestinationConfigs": ["arn:aws:logs:'$AWS_DEFAULT_REGION':'$AWS_ACCOUNT_ID':log-group:aws-waf-logs-kpmg"]
+       "LogDestinationConfigs": ["arn:aws:logs:'$AWS_DEFAULT_REGION':'$AWS_ACCOUNT_ID':log-group:aws-waf-logs"]
      }'
 
 5. Creates subscription filter to LMLogsForwarder (reuse logic from 1.4):
@@ -797,7 +797,7 @@ Task: Create dashboards/azure-private-endpoint-health.json with:
 
 1. Dashboard definition:
    - Name: Azure Private Endpoint Health
-   - Group: KPMG Network Monitoring
+   - Group: Network Monitoring
 
 2. Widgets:
    a. NOC Widget - Private Endpoint Status
@@ -844,8 +844,8 @@ Task: Create scripts/common/create-website-checks.sh that:
    {
      "checks": [
        {
-         "name": "Azure East US - KPMG App",
-         "url": "https://app-eastus.kpmg.azure.example.com/health",
+         "name": "Azure East US - Test App",
+         "url": "https://app-eastus.test.azure.example.com/health",
          "type": "webcheck",
          "checkpoints": ["US - Los Angeles", "US - Washington DC", "EU - Dublin"],
          "frequency": 5
@@ -928,7 +928,7 @@ Task: Create dashboards/performance-benchmark.json with:
 
 1. Dashboard definition:
    - Name: Cloud Performance Benchmark
-   - Group: KPMG Network Monitoring
+   - Group: Network Monitoring
 
 2. Azure Performance Section:
    a. Custom Graph - Azure Region Latency
@@ -981,7 +981,7 @@ Task: Create dashboards/aws-egress-cost.json with:
 
 1. Dashboard definition:
    - Name: AWS Egress Cost Attribution
-   - Group: KPMG Cost Analysis
+   - Group: Cost Analysis
 
 2. Cost Section (from Cost Optimization Billing data):
    a. Billing Widget - Data Transfer Costs
@@ -1029,7 +1029,7 @@ Task: Create dashboards/azure-egress-cost.json with:
 
 1. Dashboard definition:
    - Name: Azure Egress Cost Attribution  
-   - Group: KPMG Cost Analysis
+   - Group: Cost Analysis
 
 2. Cost Section (from Cost Optimization Billing data):
    a. Billing Widget - Bandwidth Costs
@@ -1072,7 +1072,7 @@ Task: Create dashboards/multicloud-egress-overview.json with:
 
 1. Dashboard definition:
    - Name: Multi-Cloud Egress Overview
-   - Group: KPMG Executive
+   - Group: Executive
 
 2. Summary Section:
    a. Big Number - Total AWS Egress Cost (MTD)
@@ -1116,7 +1116,7 @@ Task: Create dashboards/aws-security-operations.json with:
 
 1. Dashboard definition:
    - Name: AWS Security Operations
-   - Group: KPMG Security
+   - Group: Security
 
 2. WAF Section:
    a. Custom Graph - WAF Request Flow
@@ -1207,7 +1207,7 @@ Acceptance Criteria:
 ```text
 [Prompt 8.2: Create Final Documentation]
 
-Context: Project handoff documentation for KPMG.
+Context: Project documentation and handoff.
 
 Task: Create comprehensive documentation:
 
