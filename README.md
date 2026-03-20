@@ -1,6 +1,16 @@
 # LM Log Integrations
 
-Multi-cloud log integration POC for Product Engineering. Ingests VPC/VNet flow logs, WAF logs, and security metrics from AWS, Azure, and GCP into LogicMonitor LM Logs.
+Multi-cloud log integration for Product Engineering stress testing. Ingests VPC/VNet flow logs, WAF logs, and security metrics from AWS, Azure, and GCP into LogicMonitor LM Logs.
+
+## Architecture
+
+Each cloud provider uses a different ingest path, but all deliver structured log entries to the LM Logs API with `_lm.resourceId` mapping for automatic resource association.
+
+| Cloud | Trigger | Compute | Auth | Ingest Method |
+|-------|---------|---------|------|---------------|
+| AWS | CloudWatch Logs subscription filter | Lambda (dual: VPC + WAF) | Bearer token | Webhook |
+| Azure | Event Grid (BlobCreated) | Azure Function | LMv1 HMAC-SHA256 | REST Ingest API |
+| GCP | Pub/Sub | Cloud Function | Bearer token | Webhook |
 
 ## Cloud Providers
 
@@ -15,6 +25,13 @@ Multi-cloud log integration POC for Product Engineering. Ingests VPC/VNet flow l
 
 **Pipeline:** CloudWatch Logs -> Lambda (webhook forwarder) -> LM Webhook Ingest
 
+Dual-Lambda architecture: `WebhookForwarderVPC` and `WebhookForwarderWAF` each have dedicated CloudFormation stacks with isolated reserved concurrency to prevent resource starvation.
+
+**Key scripts:**
+- `aws/vpc-flow-logs/scripts/setup-vpc-flow-log-group.sh` - Create log group and IAM role
+- `aws/vpc-flow-logs/scripts/deploy-webhook-forwarder.sh` - Deploy both Lambda stacks
+- `aws/waf/scripts/enable-waf-logging.sh` - Enable WAF logging and wire subscription
+
 ### Azure (`azure/`)
 
 | Integration | Status | Path |
@@ -22,7 +39,13 @@ Multi-cloud log integration POC for Product Engineering. Ingests VPC/VNet flow l
 | VNet Flow Logs | Operational | `azure/vnet-flow-logs/` |
 | Function App Logs | Options drafted | `azure/function-app-logs/` |
 
-**Pipeline:** Storage Account -> Event Grid -> Azure Function -> LM REST Ingest API
+**Pipeline:** Storage Account -> Event Grid (BlobCreated/PutBlockList) -> Azure Function -> LM REST Ingest API
+
+Incremental processing: block-level watermarks in Table Storage track which blocks have been processed. Only new blocks are read on each trigger, avoiding full blob reprocessing. Concurrency is limited to 1 (`maxConcurrentCalls`) to prevent watermark race conditions.
+
+**Key files:**
+- `azure/vnet-flow-logs/function/vnet-flow-forwarder/` - Function App source
+- `azure/vnet-flow-logs/tests/` - Unit and integration tests
 
 ### GCP (`gcp/`)
 
@@ -32,17 +55,17 @@ Multi-cloud log integration POC for Product Engineering. Ingests VPC/VNet flow l
 
 **Pipeline:** Pub/Sub -> Cloud Function -> LM Webhook Ingest
 
-## Testing Each Integration
+## Testing
 
 ```bash
-# AWS VPC Flow Logs
+# AWS VPC Flow Logs (requires AWS credentials)
 bash aws/vpc-flow-logs/tests/test-aws-vpc-flow.sh
 
-# Azure VNet Flow Logs (Python tests)
-cd azure/vnet-flow-logs && python -m pytest tests/
+# Azure VNet Flow Logs (unit tests, no credentials needed)
+cd azure/vnet-flow-logs && python -m pytest tests/ -v
 
-# Azure VNet Flow Logs (E2E)
-bash azure/vnet-flow-logs/tests/test_e2e.sh
+# Azure VNet Flow Logs (integration tests, requires AZURE_STORAGE_CONNECTION_STRING)
+cd azure/vnet-flow-logs && python -m pytest tests/test_integration.py -v
 
 # GCP VPC Flow Logs
 cd gcp/vpc-flow-logs && uv run pytest
@@ -52,12 +75,15 @@ cd gcp/vpc-flow-logs && uv run pytest
 
 1. Copy `.env.example` to `.env` and fill in credentials
 2. Run `shared/scripts/validate-all.sh` to verify environment
-3. See `docs/` for detailed plans and status
+3. Deploy per-cloud pipelines using the scripts in each cloud directory
 
-## Docs
+## Constraints
 
-- `docs/plan.md` - Implementation plan
-- `docs/todo.md` - Progress tracking
-- `docs/lessons.md` - Learned patterns and constraints
-- `docs/logging_spec.md` - Technical specification
-- `docs/aws-security-datasource-status.md` - AWS DataSource audit
+| Constraint | Details |
+|-----------|---------|
+| No Cloud Collectors | All DataSources use Groovy collection scripts, not cloud collectors |
+| 7MB Batch Limit | LM REST Ingest API enforces a 7MB batch size limit |
+| Bearer Token (AWS) | Lambda uses `LM_BEARER_TOKEN` for webhook auth |
+| LMv1 HMAC (Azure) | Function uses `LM_ACCESS_ID` + `LM_ACCESS_KEY` for REST Ingest auth |
+| Shield Skipped | AWS Shield Advanced not deployed ($3k/mo + 1yr commitment) |
+| Network Firewall Blocked | Not deployed in sandbox (~$285/mo); JSON spec exists as reference |
