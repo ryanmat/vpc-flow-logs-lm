@@ -12,7 +12,7 @@ if [ $# -lt 1 ]; then
     echo "Usage: $0 <WEB_ACL_ARN> [LOG_GROUP_NAME]"
     echo ""
     echo "  WEB_ACL_ARN      The WAF Web ACL ARN to enable logging on"
-    echo "  LOG_GROUP_NAME   Optional, defaults to aws-waf-logs"
+    echo "  LOG_GROUP_NAME   Optional, defaults to aws-waf-logs-lm"
     echo ""
     echo "  Note: WAF log group names MUST start with 'aws-waf-logs-'"
     echo ""
@@ -22,7 +22,7 @@ if [ $# -lt 1 ]; then
 fi
 
 WEB_ACL_ARN="$1"
-LOG_GROUP_NAME="${2:-aws-waf-logs}"
+LOG_GROUP_NAME="${2:-aws-waf-logs-lm}"
 
 # WAF log group names must start with 'aws-waf-logs-'
 if [[ "$LOG_GROUP_NAME" != aws-waf-logs-* ]]; then
@@ -85,17 +85,17 @@ else
     exit 1
 fi
 
-# Step 4: Create subscription filter to LMLogsForwarder
-echo "[4/4] Creating subscription filter to LMLogsForwarder..."
-FUNCTION_NAME="LMLogsForwarder"
+# Step 4: Create subscription filter to WebhookForwarderWAF
+echo "[4/4] Creating subscription filter to WebhookForwarderWAF..."
+FUNCTION_NAME="WebhookForwarderWAF"
 LAMBDA_ARN=$(aws lambda get-function \
     --function-name "$FUNCTION_NAME" \
     --query 'Configuration.FunctionArn' \
     --output text \
     $PROFILE_FLAG 2>/dev/null) || {
-    echo "  [WARN] LMLogsForwarder Lambda not found. Deploy it first."
-    echo "         Run: scripts/aws/deploy-lm-logs-forwarder.sh"
-    echo "         Then: scripts/aws/create-subscription-filter.sh $LOG_GROUP_NAME"
+    echo "  [WARN] WebhookForwarderWAF Lambda not found. Deploy it first."
+    echo "         Run: aws/vpc-flow-logs/scripts/deploy-webhook-forwarder.sh"
+    echo "         Then re-run this script."
     exit 1
 }
 
@@ -118,7 +118,7 @@ fi
 # Create subscription filter
 aws logs put-subscription-filter \
     --log-group-name "$LOG_GROUP_NAME" \
-    --filter-name "LMLogsForwarder" \
+    --filter-name "WebhookForwarder" \
     --filter-pattern "" \
     --destination-arn "$LAMBDA_ARN" \
     $PROFILE_FLAG

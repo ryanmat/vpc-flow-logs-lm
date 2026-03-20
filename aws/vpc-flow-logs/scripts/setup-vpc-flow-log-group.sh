@@ -82,7 +82,7 @@ PERMISSIONS_POLICY='{
         "logs:DescribeLogGroups",
         "logs:DescribeLogStreams"
       ],
-      "Resource": "*"
+      "Resource": "arn:aws:logs:*:*:log-group:/aws/vpc/flowlogs:*"
     }
   ]
 }'
