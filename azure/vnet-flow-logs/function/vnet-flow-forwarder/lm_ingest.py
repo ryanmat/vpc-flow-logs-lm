@@ -20,15 +20,15 @@ def build_lmv1_signature(access_key, http_verb, epoch_ms, body, resource_path):
     """Build the LMv1 HMAC-SHA256 signature.
 
     The signature is computed as:
-      base64(hex(HMAC-SHA256(access_key, verb + timestamp + body + path)))
+      base64(HMAC-SHA256(access_key, verb + timestamp + body + path))
     """
     request_vars = http_verb + epoch_ms + body + resource_path
-    hex_digest = hmac.new(
+    digest = hmac.new(
         access_key.encode("utf-8"),
         msg=request_vars.encode("utf-8"),
         digestmod=hashlib.sha256,
-    ).hexdigest()
-    return base64.b64encode(hex_digest.encode("utf-8")).decode("utf-8")
+    ).digest()
+    return base64.b64encode(digest).decode("utf-8")
 
 
 def build_auth_header(access_id, access_key, body):
@@ -55,7 +55,8 @@ def compress_payload(body_str):
 def send_batch(entries, company, access_id, access_key, timeout=30):
     """POST a batch of log entries to the LM Logs Ingest API.
 
-    Returns True on success (HTTP 2xx), False on any error.
+    Returns the HTTP status code on a response (2xx, 4xx, 5xx), or -1 on
+    connection/timeout errors where no HTTP response was received.
     """
     url = f"https://{company}.logicmonitor.com/rest/log/ingest"
     body_str = json.dumps(entries)
@@ -73,29 +74,38 @@ def send_batch(entries, company, access_id, access_key, timeout=30):
             status = resp.status
             resp_body = resp.read().decode("utf-8")
             logger.info("LM ingest response %d: %s (%d entries)", status, resp_body[:200], len(entries))
-            return 200 <= status < 300
+            return status
     except urllib.error.HTTPError as e:
         logger.error("LM ingest HTTP %d: %s", e.code, e.read().decode("utf-8", errors="replace")[:200])
-        return False
+        return e.code
     except Exception:
         logger.exception("LM ingest request failed")
-        return False
+        return -1
+
+
+def _is_retryable(status_code):
+    """Return True if the status code indicates a retryable failure."""
+    return status_code == -1 or status_code == 429 or status_code >= 500
 
 
 def send_with_retry(entries, company, access_id, access_key, max_retries=3, retry_base_delay=1.0):
-    """Send a batch with exponential backoff retry on failure.
+    """Send a batch with exponential backoff retry on transient failures.
 
-    Retries up to max_retries times with delays of retry_base_delay * 2^attempt.
-    Returns True if any attempt succeeds, False if all fail.
+    Retries on 429, 5xx, and connection errors (-1). Returns True if any
+    attempt succeeds (2xx), False on non-retryable errors or exhausted retries.
     """
     for attempt in range(max_retries + 1):
-        success = send_batch(entries, company, access_id, access_key)
-        if success:
+        status = send_batch(entries, company, access_id, access_key)
+        if 200 <= status < 300:
             return True
+
+        if not _is_retryable(status):
+            logger.error("LM ingest non-retryable HTTP %d, dropping %d entries", status, len(entries))
+            return False
 
         if attempt < max_retries:
             wait = retry_base_delay * (2 ** attempt)
-            logger.warning("LM ingest failed, retry %d/%d after %.1fs", attempt + 1, max_retries, wait)
+            logger.warning("LM ingest failed (%d), retry %d/%d after %.1fs", status, attempt + 1, max_retries, wait)
             time.sleep(wait)
 
     logger.error("LM ingest failed after %d retries, dropping %d entries", max_retries, len(entries))

@@ -20,7 +20,7 @@
   },
   "extensions": {
     "eventGrid": {
-      "maxConcurrentCalls": 10
+      "maxConcurrentCalls": 1
     }
   }
 }

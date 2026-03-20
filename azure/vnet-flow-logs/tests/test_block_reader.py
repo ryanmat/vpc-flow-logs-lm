@@ -8,8 +8,9 @@ from unittest.mock import MagicMock, patch, PropertyMock
 from collections import namedtuple
 
 import pytest
+from azure.core.exceptions import ResourceNotFoundError
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "azure-function", "vnet-flow-forwarder"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "function", "vnet-flow-forwarder"))
 
 from block_reader import (
     get_new_block_data,
@@ -152,9 +153,15 @@ class TestGetSetWatermark:
 
     def test_get_watermark_returns_zero_when_not_found(self):
         mock_table_client = MagicMock()
-        mock_table_client.get_entity.side_effect = Exception("Not found")
+        mock_table_client.get_entity.side_effect = ResourceNotFoundError("Not found")
         result = get_watermark(mock_table_client, "test_blob_key")
         assert result == 0
+
+    def test_get_watermark_propagates_unexpected_errors(self):
+        mock_table_client = MagicMock()
+        mock_table_client.get_entity.side_effect = PermissionError("Access denied")
+        with pytest.raises(PermissionError):
+            get_watermark(mock_table_client, "test_blob_key")
 
     def test_get_watermark_returns_stored_value(self):
         mock_table_client = MagicMock()
