@@ -41,6 +41,7 @@ local.settings.json
 
 # Claude Code
 .claude/
+CLAUDE.md
 docs/plan.md
 docs/todo.md
 
