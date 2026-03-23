@@ -32,8 +32,11 @@ class TestDataSourceJsonStructure:
     def test_has_multi_instances(self, datasource_json):
         assert datasource_json["hasMultiInstances"] is True
 
-    def test_applies_to_uses_category(self, datasource_json):
-        assert 'hasCategory("Azure/VirtualNetworks")' in datasource_json["appliesTo"]
+    def test_applies_to_uses_credential_properties(self, datasource_json):
+        """appliesTo targets devices with Azure service principal credentials set."""
+        applies_to = datasource_json["appliesTo"]
+        assert "azure.tenantid" in applies_to
+        assert "azure.subscriptionids" in applies_to
 
     def test_applies_to_not_hardcoded(self, datasource_json):
         assert "system.displayname ==" not in datasource_json["appliesTo"]

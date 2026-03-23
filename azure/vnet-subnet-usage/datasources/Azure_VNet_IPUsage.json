@@ -2,7 +2,7 @@
   "name": "Azure_VNet_IPUsage",
   "displayName": "Azure VNet IP Usage",
   "description": "Monitors Azure Virtual Network subnet IP address utilization via ARM REST API. Tracks used, total, and free IPs per subnet. Alerts on high usage to prevent allocation failures.",
-  "appliesTo": "hasCategory(\"Azure/VirtualNetworks\")",
+  "appliesTo": "azure.tenantid =~ \".+\" && azure.subscriptionids =~ \".+\"",
   "collectMethod": "batchscript",
   "group": "Azure",
   "tags": "azure,vnet,ip-usage,capacity",
