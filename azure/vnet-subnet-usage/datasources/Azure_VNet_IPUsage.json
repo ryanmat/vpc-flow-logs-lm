@@ -1,0 +1,69 @@
+{
+  "name": "Azure_VNet_IPUsage",
+  "displayName": "Azure VNet IP Usage",
+  "description": "Monitors Azure Virtual Network subnet IP address utilization via ARM REST API. Tracks used, total, and free IPs per subnet. Alerts on high usage to prevent allocation failures.",
+  "appliesTo": "azure.tenantid =~ \".+\" && azure.subscriptionids =~ \".+\"",
+  "collectMethod": "batchscript",
+  "group": "Azure",
+  "tags": "azure,vnet,ip-usage,capacity",
+  "collectInterval": 300,
+  "hasMultiInstances": true,
+  "collectorAttribute": {
+    "name": "batchscript",
+    "scriptType": "embed",
+    "groovyScript": "see Azure_VNet_IPUsage_Collection.groovy"
+  },
+  "enableAutoDiscovery": true,
+  "autoDiscoveryConfig": {
+    "method": "ad_script",
+    "scheduleInterval": 15,
+    "instanceAutoGroupMethod": "ilp",
+    "instanceAutoGroupMethodParams": "auto.azure.resourcegroup",
+    "deleteInactiveInstance": true,
+    "groovyScript": "see Azure_VNet_IPUsage_AD.groovy"
+  },
+  "dataPoints": [
+    {
+      "name": "UsedIPs",
+      "description": "Number of IP addresses currently allocated in the subnet",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "##WILDVALUE##.UsedIPs"
+    },
+    {
+      "name": "TotalIPs",
+      "description": "Total usable IP addresses in the subnet (subnet size minus 5 Azure-reserved)",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "##WILDVALUE##.TotalIPs"
+    },
+    {
+      "name": "FreeIPs",
+      "description": "Remaining available IP addresses in the subnet (TotalIPs - UsedIPs)",
+      "dataType": 7,
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "##WILDVALUE##.FreeIPs"
+    },
+    {
+      "name": "PercentUsed",
+      "description": "Percentage of subnet IP space consumed",
+      "dataType": 7,
+      "maxValue": "100",
+      "minValue": "0",
+      "postProcessorMethod": "expression",
+      "postProcessorParam": "TotalIPs > 0 ? (UsedIPs * 100 / TotalIPs) : 0",
+      "alertExpr": "> 80 90 95",
+      "alertSubject": "Azure Subnet IP Exhaustion: ##INSTANCE## at ##VALUE##%",
+      "alertBody": "Subnet ##INSTANCE## IP usage is ##VALUE##%. Used: ##UsedIPs## / Total: ##TotalIPs##. Free: ##FreeIPs## remaining."
+    }
+  ],
+  "deviceRequirements": {
+    "customProperties": {
+      "azure.tenantid": "Azure AD tenant ID for the service principal",
+      "azure.clientid": "Service principal (app registration) client ID",
+      "azure.secretkey": "Service principal client secret",
+      "azure.subscriptionids": "Comma-separated Azure subscription IDs to scan"
+    },
+    "collectorRequirements": "Collector must have HTTPS access to management.azure.com and login.microsoftonline.com"
+  }
+}

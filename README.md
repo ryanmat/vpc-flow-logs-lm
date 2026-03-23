@@ -1,6 +1,6 @@
 # LM Log Integrations
 
-Multi-cloud log integration for Product Engineering stress testing. Ingests VPC/VNet flow logs, WAF logs, and security metrics from AWS, Azure, and GCP into LogicMonitor LM Logs.
+Multi-cloud log and metric integration for Product Engineering stress testing. Ingests VPC/VNet flow logs, WAF logs, security metrics, and infrastructure capacity data from AWS, Azure, and GCP into LogicMonitor.
 
 ## Architecture
 
@@ -37,14 +37,20 @@ Dual-Lambda architecture: `WebhookForwarderVPC` and `WebhookForwarderWAF` each h
 | Integration | Status | Path |
 |-------------|--------|------|
 | VNet Flow Logs | Operational | `azure/vnet-flow-logs/` |
+| VNet Subnet IP Usage | Operational | `azure/vnet-subnet-usage/` |
 | Function App Logs | Options drafted | `azure/function-app-logs/` |
 
-**Pipeline:** Storage Account -> Event Grid (BlobCreated/PutBlockList) -> Azure Function -> LM REST Ingest API
+**Log Pipeline:** Storage Account -> Event Grid (BlobCreated/PutBlockList) -> Azure Function -> LM REST Ingest API
 
 Incremental processing: block-level watermarks in Table Storage track which blocks have been processed. Only new blocks are read on each trigger, avoiding full blob reprocessing. Concurrency is limited to 1 (`maxConcurrentCalls`) to prevent watermark race conditions.
 
+**Metric Pipeline:** Groovy batchscript on collector -> Azure ARM REST API (`virtualNetworks/usages`) -> LM DataSource
+
+The VNet Subnet IP Usage DataSource monitors available IP addresses per subnet. Azure Monitor has no native metric for subnet IP utilization, so this uses the ARM REST API directly. Alerts at 80/90/95% usage to prevent allocation failures.
+
 **Key files:**
 - `azure/vnet-flow-logs/function/vnet-flow-forwarder/` - Function App source
+- `azure/vnet-subnet-usage/datasources/` - DataSource JSON + Groovy collection/AD scripts
 - `azure/vnet-flow-logs/tests/` - Unit and integration tests
 
 ### GCP (`gcp/`)
@@ -66,6 +72,12 @@ cd azure/vnet-flow-logs && python -m pytest tests/ -v
 
 # Azure VNet Flow Logs (integration tests, requires AZURE_STORAGE_CONNECTION_STRING)
 cd azure/vnet-flow-logs && python -m pytest tests/test_integration.py -v
+
+# Azure VNet Subnet IP Usage (unit tests, no credentials needed)
+cd azure/vnet-subnet-usage && uv run pytest tests/ -v
+
+# Azure VNet Subnet IP Usage (integration tests, requires AZURE_TENANT_ID + service principal)
+cd azure/vnet-subnet-usage && uv run pytest tests/test_integration.py -v
 
 # GCP VPC Flow Logs
 cd gcp/vpc-flow-logs && uv run pytest
