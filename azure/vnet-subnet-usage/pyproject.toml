@@ -1,0 +1,14 @@
+[project]
+name = "azure-vnet-subnet-usage"
+version = "0.1.0"
+description = "Azure VNet Subnet IP Usage DataSource for LogicMonitor"
+requires-python = ">=3.12"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

@@ -1,0 +1,34 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet/subnets/default",
+      "currentValue": 50.0,
+      "limit": 251.0,
+      "name": {
+        "localizedValue": "Subnet size and usage",
+        "value": "SubnetSpace"
+      },
+      "unit": "Count"
+    },
+    {
+      "id": "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet/subnets/backend",
+      "currentValue": 10.0,
+      "limit": 59.0,
+      "name": {
+        "localizedValue": "Subnet size and usage",
+        "value": "SubnetSpace"
+      },
+      "unit": "Count"
+    },
+    {
+      "id": "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet/subnets/db-tier",
+      "currentValue": 0.0,
+      "limit": 27.0,
+      "name": {
+        "localizedValue": "Subnet size and usage",
+        "value": "SubnetSpace"
+      },
+      "unit": "Count"
+    }
+  ]
+}

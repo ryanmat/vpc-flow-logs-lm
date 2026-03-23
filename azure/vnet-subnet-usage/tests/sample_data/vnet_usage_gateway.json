@@ -1,0 +1,24 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet/subnets/default",
+      "currentValue": 50.0,
+      "limit": 251.0,
+      "name": {
+        "localizedValue": "Subnet size and usage",
+        "value": "SubnetSpace"
+      },
+      "unit": "Count"
+    },
+    {
+      "id": "/subscriptions/00000000-1111-2222-3333-444444444444/resourceGroups/CTA_Resource_Group/providers/Microsoft.Network/virtualNetworks/CTA-vnet/subnets/GatewaySubnet",
+      "currentValue": -1.0,
+      "limit": -1.0,
+      "name": {
+        "localizedValue": "Subnet size and usage",
+        "value": "SubnetSpace"
+      },
+      "unit": "Count"
+    }
+  ]
+}
