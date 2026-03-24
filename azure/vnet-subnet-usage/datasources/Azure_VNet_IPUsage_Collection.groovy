@@ -94,11 +94,14 @@ try {
                 }
 
                 def freeIPs = totalAvailable - currentUsed
+                def percentUsed = totalAvailable > 0 ?
+                    ((currentUsed as Double) / (totalAvailable as Double) * 100.0).round(2) : 0
                 def instanceId = "${vnetName}_${subnetName}"
 
                 println "${instanceId}.UsedIPs=${currentUsed}"
                 println "${instanceId}.TotalIPs=${totalAvailable}"
                 println "${instanceId}.FreeIPs=${freeIPs}"
+                println "${instanceId}.PercentUsed=${percentUsed}"
             }
         }
     }

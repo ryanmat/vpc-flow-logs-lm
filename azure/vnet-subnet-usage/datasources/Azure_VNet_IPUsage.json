@@ -50,8 +50,8 @@
       "dataType": 7,
       "maxValue": "100",
       "minValue": "0",
-      "postProcessorMethod": "expression",
-      "postProcessorParam": "UsedIPs * 100 / TotalIPs",
+      "postProcessorMethod": "namevalue",
+      "postProcessorParam": "##WILDVALUE##.PercentUsed",
       "alertExpr": "> 80 90 95",
       "alertSubject": "Azure Subnet IP Exhaustion: ##INSTANCE## at ##VALUE##%",
       "alertBody": "Subnet ##INSTANCE## IP usage is ##VALUE##%. Used: ##UsedIPs## / Total: ##TotalIPs##. Free: ##FreeIPs## remaining."
