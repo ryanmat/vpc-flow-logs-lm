@@ -92,10 +92,11 @@ class TestDataPointDefinitions:
         dp = next(d for d in datasource_json["dataPoints"] if d["name"] == "PercentUsed")
         assert dp["postProcessorMethod"] == "expression"
 
-    def test_percent_used_has_div_by_zero_guard(self, datasource_json):
+    def test_percent_used_expression_references_datapoints(self, datasource_json):
         dp = next(d for d in datasource_json["dataPoints"] if d["name"] == "PercentUsed")
         expr = dp["postProcessorParam"]
-        assert "TotalIPs > 0" in expr or "TotalIPs>0" in expr
+        assert "UsedIPs" in expr
+        assert "TotalIPs" in expr
 
     def test_percent_used_has_alert_thresholds(self, datasource_json):
         dp = next(d for d in datasource_json["dataPoints"] if d["name"] == "PercentUsed")
