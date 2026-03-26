@@ -9,8 +9,12 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from cloud_function.config import Config
-from cloud_function.lm_auth import generate_lmv1_token, get_bearer_header
+try:
+    from cloud_function.config import Config
+    from cloud_function.lm_auth import generate_lmv1_token, get_bearer_header
+except ImportError:
+    from config import Config
+    from lm_auth import generate_lmv1_token, get_bearer_header
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +112,10 @@ class LMClient:
 
         try:
             response = self._session.post(url, json=payload, headers=headers)
+            print(
+                f"LM_WEBHOOK status={response.status_code} body={response.text[:200]}",
+                flush=True,
+            )
             if response.status_code in (200, 202):
                 return True
             logger.error(

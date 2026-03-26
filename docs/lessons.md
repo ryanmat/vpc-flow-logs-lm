@@ -36,3 +36,10 @@ Constraints and patterns discovered during implementation that apply to all futu
 - Groovy collection scripts on traditional collectors require AWS CLI at /usr/local/bin/aws with IAM access.
 - Per-instance collection uses instanceProps.get("wildvalue") to get the rule/dimension name discovered by the AD script.
 - namevalue post-processor expects "key=value" output format from collection scripts.
+- LM REST API update_datasource is a FULL REPLACE, not a partial update. Omitted fields are blanked (empty string, false, null). Every update call must include the complete DataSource definition. Export first, modify, then PUT back.
+- For batchscript namevalue datapoints, rawDataFieldName MUST be set to "output". If omitted, the namevalue post-processor cannot locate the script output and returns "unknown raw datapoint" errors.
+- Batchscript DataSources execute on traditional collectors (collector_id > 0), not cloud-discovered resources (collector_id: -2). appliesTo must target a device with collector credentials (e.g., a collector device with azure.tenantid property), not the cloud resource itself.
+- LM appliesTo DSL is NOT Groovy. Methods like `.size()` are invalid. Use regex matching (`property =~ ".+"`) to test for non-empty property values.
+- Groovy script error handling: use System.err.println for errors, not println. println goes to stdout and corrupts namevalue parser output. stderr goes to collector logs where it is useful for debugging.
+- LM ComplexDataPoint expressions do NOT support ternary operators (`condition ? a : b`). The expression engine silently fails, producing "No Data" instead of an error. Use simple arithmetic and prevent division-by-zero at the discovery layer (filter out zero-denominator instances) rather than guarding in the expression.
+- When the same appliesTo mistake recurs (targeting cloud resources for batchscript), the root cause is not forgetting the rule -- it is that appliesTo defaults feel intuitive (hasCategory matches the resource you want data about). The correct mental model: appliesTo selects WHERE the script RUNS, not what it monitors. Batchscript runs on the collector device, not the cloud resource.

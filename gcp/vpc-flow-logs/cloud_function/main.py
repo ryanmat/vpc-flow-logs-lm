@@ -3,20 +3,41 @@
 from __future__ import annotations
 
 import logging
+import sys
 
 import functions_framework
 import requests
 
-from cloud_function.config import load_config
-from cloud_function.flow_log_parser import (
-    extract_flow_log,
-    extract_metadata,
-    extract_resource_id,
-    format_ingest_api_payload,
-    format_webhook_payload,
-    parse_pubsub_message,
+# Configure root logger so all output reaches Cloud Run's log collector.
+# Without this, Python logging calls are invisible in Cloud Logging.
+logging.basicConfig(
+    level=logging.INFO,
+    stream=sys.stderr,
+    format="%(levelname)s %(name)s: %(message)s",
 )
-from cloud_function.lm_client import LMClient
+
+try:
+    from cloud_function.config import load_config
+    from cloud_function.flow_log_parser import (
+        extract_flow_log,
+        extract_metadata,
+        extract_resource_id,
+        format_ingest_api_payload,
+        format_webhook_payload,
+        parse_pubsub_message,
+    )
+    from cloud_function.lm_client import LMClient
+except ImportError:
+    from config import load_config
+    from flow_log_parser import (
+        extract_flow_log,
+        extract_metadata,
+        extract_resource_id,
+        format_ingest_api_payload,
+        format_webhook_payload,
+        parse_pubsub_message,
+    )
+    from lm_client import LMClient
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +54,11 @@ def _init():
     _config = load_config()
     _client = LMClient(_config)
     _initialized = True
+    print(
+        f"COLD START: mode={'webhook' if _config.use_webhook else 'ingest_api'}, "
+        f"company={_config.lm_company_name}, source={_config.webhook_source_name}",
+        flush=True,
+    )
 
 
 @functions_framework.cloud_event

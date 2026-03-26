@@ -21,7 +21,12 @@ def parse_pubsub_message(cloud_event: dict) -> dict:
     Raises:
         ValueError: If the message is malformed or cannot be decoded.
     """
-    data = cloud_event.get("data")
+    # CloudEvent objects (production) expose data as a property.
+    # Plain dicts (tests) use .get(). Handle both.
+    try:
+        data = cloud_event.data
+    except AttributeError:
+        data = cloud_event.get("data")
     if not data:
         raise ValueError("CloudEvent missing 'data' field")
 
@@ -199,6 +204,10 @@ def format_webhook_payload(flow_log: dict, log_entry: dict) -> dict:
 
     # Human-readable summary
     payload["message"] = _build_summary(flow_log)
+
+    # Log level and resource type for LM Webhook LogSource field extraction
+    payload["Level"] = "info"
+    payload["resourceType"] = "GCP VM"
 
     # LogEntry timestamp
     if "timestamp" in log_entry:
