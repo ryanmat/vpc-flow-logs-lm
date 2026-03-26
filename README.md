@@ -59,7 +59,25 @@ The VNet Subnet IP Usage DataSource monitors available IP addresses per subnet. 
 |-------------|--------|------|
 | VPC Flow Logs | Operational | `gcp/vpc-flow-logs/` |
 
-**Pipeline:** Pub/Sub -> Cloud Function -> LM Webhook Ingest
+**Pipeline:** Cloud Logging -> Log Router sink -> Pub/Sub -> Cloud Function (2nd gen) -> LM Webhook Ingest
+
+VPC Flow Logs are captured by Cloud Logging, routed via a Log Router sink to a Pub/Sub topic, and processed by a Gen2 Cloud Function triggered by Eventarc. The function parses CloudEvent-wrapped LogEntries, extracts flow log fields (connection, instances, VPC, GKE details), and forwards structured JSON to the LM webhook endpoint with Bearer token auth. Supports both Ingest API (LMv1 HMAC) and Webhook paths.
+
+**Infrastructure:** Provisioned via `gcloud` CLI scripts (no Terraform). Secret Manager stores LM credentials. The function scales to zero when idle (e2-micro test VM generates flow traffic).
+
+**Key files:**
+- `gcp/vpc-flow-logs/cloud_function/main.py` - Cloud Function entry point
+- `gcp/vpc-flow-logs/cloud_function/flow_log_parser.py` - CloudEvent/LogEntry parsing
+- `gcp/vpc-flow-logs/cloud_function/lm_client.py` - HTTP client for LM endpoints
+- `gcp/vpc-flow-logs/infra/setup_gcp.sh` - Provision Pub/Sub, Log Router, Secret Manager
+- `gcp/vpc-flow-logs/infra/deploy_function.sh` - Deploy Cloud Function
+- `gcp/vpc-flow-logs/documentation/customer_guide.md` - Full deployment walkthrough
+- `gcp/vpc-flow-logs/documentation/webhook_logsource_setup.md` - LM Webhook LogSource config
+
+**LM Webhook LogSource notes:**
+- Resource mapping must use `system.gcp.resourcename` (not `system.hostname`) for GCP cloud-discovered devices
+- Filter: `SourceName Equal GCP-VPC-FlowLogs`
+- Payload includes `Level` and `resourceType` fields for LogSource extraction
 
 ## Testing
 
@@ -95,7 +113,8 @@ cd gcp/vpc-flow-logs && uv run pytest
 |-----------|---------|
 | No Cloud Collectors | All DataSources use Groovy collection scripts, not cloud collectors |
 | 7MB Batch Limit | LM REST Ingest API enforces a 7MB batch size limit |
-| Bearer Token (AWS) | Lambda uses `LM_BEARER_TOKEN` for webhook auth |
+| Bearer Token (AWS/GCP) | Lambda and Cloud Function use `LM_BEARER_TOKEN` for webhook auth |
 | LMv1 HMAC (Azure) | Function uses `LM_ACCESS_ID` + `LM_ACCESS_KEY` for REST Ingest auth |
+| GCP Secret Manager | Cloud Function loads LM credentials from Secret Manager at runtime |
 | Shield Skipped | AWS Shield Advanced not deployed ($3k/mo + 1yr commitment) |
 | Network Firewall Blocked | Not deployed in sandbox (~$285/mo); JSON spec exists as reference |
