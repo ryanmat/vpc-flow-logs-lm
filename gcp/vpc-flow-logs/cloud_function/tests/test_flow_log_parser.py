@@ -250,8 +250,8 @@ class TestFormatWebhookPayload:
         payload = format_webhook_payload(flow_log_src_vm, log_entry)
         assert payload["src_ip"] == "10.128.0.15"
         assert payload["dest_ip"] == "10.128.0.22"
-        assert payload["src_port"] == 443
-        assert payload["protocol"] == 6
+        assert payload["src_port"] == "443"
+        assert payload["protocol"] == "6"
 
     def test_includes_traffic_fields(self, flow_log_src_vm, cloud_event_vm):
         log_entry = parse_pubsub_message(cloud_event_vm)

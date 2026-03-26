@@ -43,3 +43,38 @@ Constraints and patterns discovered during implementation that apply to all futu
 - Groovy script error handling: use System.err.println for errors, not println. println goes to stdout and corrupts namevalue parser output. stderr goes to collector logs where it is useful for debugging.
 - LM ComplexDataPoint expressions do NOT support ternary operators (`condition ? a : b`). The expression engine silently fails, producing "No Data" instead of an error. Use simple arithmetic and prevent division-by-zero at the discovery layer (filter out zero-denominator instances) rather than guarding in the expression.
 - When the same appliesTo mistake recurs (targeting cloud resources for batchscript), the root cause is not forgetting the rule -- it is that appliesTo defaults feel intuitive (hasCategory matches the resource you want data about). The correct mental model: appliesTo selects WHERE the script RUNS, not what it monitors. Batchscript runs on the collector device, not the cloud resource.
+
+## GCP Architecture
+
+- GCP VPC Flow Logs use Pub/Sub as the transport: Log Router sink -> Pub/Sub topic -> Cloud Function (Pub/Sub trigger) -> LM webhook.
+- Cloud Functions Gen2 run on Cloud Run. Python logging module output (logger.info, logger.warning) may be invisible in Cloud Logging. Use print() with flush=True as primary output, and add logging.basicConfig(stream=sys.stderr) as belt-and-suspenders. Verify log output on first deployment -- do not assume standard logging works.
+- Cloud Functions deploy from inside the source directory (e.g., cloud_function/). Package-relative imports like `from cloud_function.config import X` work in tests (where pythonpath includes root) but fail in deployment. Use try/except conditional imports: try the flat import first (from config import X), fall back to the package-relative import.
+- CloudEvent trigger functions receive CloudEvent objects in production, not dicts. `cloud_event.get("data")` works on test dicts but fails on CloudEvent objects. Use `cloud_event.data` property with a try/except fallback for test compatibility. Test fixtures should use actual CloudEvent objects (from cloudevents.http import CloudEvent) rather than plain dicts.
+- GCP Log Router sinks may require a re-update after initial creation before they start publishing. If Pub/Sub topic shows zero messages after sink creation and permissions are correct, re-run the sink update command with the same configuration.
+- For GCP cloud-discovered devices in LM, use `system.gcp.resourcename` for resource mapping, NOT `system.hostname`. LM assigns long composite hostnames to GCP devices (e.g., "us-east1:project-id:computeengine:vm-name-hash") that do not match the simple VM name in flow log payloads.
+
+## LM Webhook LogSource Behavior
+
+- LM webhook returns HTTP 202 "Accepted" regardless of whether a LogSource actually processes the log. 202 does NOT mean logs are visible in portal. Always verify logs appear in the Logs tab, not just the HTTP response.
+- If no LogSource matches the incoming webhook payload (resource mapping fails, SourceName filter mismatch, or LogSource deleted), logs are silently dropped. No error feedback to the sender.
+- LM silently drops webhook logs when resource mapping fails. Resource mapping compares a webhook field value against a device property. If the values do not match (e.g., vm_name="flow-log-test" vs system.hostname="us-east1:project:computeengine:flow-log-test-hash"), the log is accepted but never attached to a device.
+- Do NOT delete and recreate LogSources to change configuration. Edit in place. Deleting creates a window where no LogSource matches, and any logs sent during that window are silently lost (202 accepted, never visible).
+- When the default LogSource handles logs but a custom LogSource does not, the issue is almost certainly in the custom LogSource's resource mapping or filter configuration, not in the webhook payload. The default LogSource is more permissive.
+
+## GCP Deployment
+
+- GCP Secret Manager is required for storing LM credentials (bearer token, company name). Cloud Function reads secrets at runtime via google-cloud-secret-manager SDK.
+- Cloud Function deployment iterations are cheap and fast (~60s each). Iterate aggressively on deployment issues rather than trying to get it perfect locally.
+- VPC Flow Logs require a dedicated subnet with flow logging enabled. The e2-micro tier is sufficient for generating test traffic.
+
+## Correction Log
+
+Format: YYYY-MM-DD | category | brief description
+
+2026-03-25 | code quality | CloudEvent data access used dict .get() method which fails on production CloudEvent objects. Tests passed because test fixtures used plain dicts. Fixed with try/except for cloud_event.data property access.
+2026-03-25 | code quality | Module imports used package-relative paths (from cloud_function.config import) that fail when Cloud Functions deploys from inside the source directory. Fixed with conditional imports (try flat, except package-relative).
+2026-03-25 | debugging | Python logging module output was invisible in Cloud Run Gen2. Spent time wondering why no logs appeared. print(flush=True) works reliably. Added logging.basicConfig(stream=sys.stderr) as secondary path.
+2026-03-25 | tool usage | GCP Log Router sink was correctly configured with permissions but not publishing. Re-running the sink update command with identical config resolved the issue. No root cause identified.
+2026-03-25 | tool usage | LM Webhook LogSource resource mapping used system.hostname which contains a long composite string for GCP devices. Flow log vm_name field never matches. Fixed by using system.gcp.resourcename.
+2026-03-25 | tool usage | LM webhook returns 202 regardless of processing outcome. Assumed 202 meant logs were ingested. Logs were silently dropped due to resource mapping failure. Must verify in portal.
+2026-03-25 | tool usage | Deleted and recreated custom LogSource to change config. Logs sent during the gap were silently dropped. Should have edited in place.

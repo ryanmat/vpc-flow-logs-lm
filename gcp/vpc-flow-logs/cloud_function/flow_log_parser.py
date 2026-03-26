@@ -213,16 +213,29 @@ def format_webhook_payload(flow_log: dict, log_entry: dict) -> dict:
     if "timestamp" in log_entry:
         payload["timestamp"] = log_entry["timestamp"]
 
-    # Convenience top-level keys from connection
+    # Convenience top-level keys from connection.
+    # All values are stringified because LM webhook LogSources only attach
+    # string values as metadata. Non-string values cause the LogSource to
+    # silently skip processing and fall through to the default handler.
     conn = flow_log.get("connection", {})
     for key in ("src_ip", "dest_ip", "src_port", "dest_port", "protocol"):
         if key in conn:
-            payload[key] = conn[key]
+            payload[key] = str(conn[key])
 
-    # Traffic fields at top level
+    # Traffic fields at top level (also stringified)
     for key in ("bytes_sent", "packets_sent", "reporter", "start_time", "end_time", "rtt_msec"):
         if key in flow_log:
-            payload[key] = flow_log[key]
+            payload[key] = str(flow_log[key])
+
+    # Top-level vm_name for Webhook LogSource resource mapping.
+    # Priority: src_instance.vm_name, then dest_instance.vm_name.
+    # Must be a top-level key so WebhookAttribute extraction can find it.
+    src_vm = flow_log.get("src_instance", {}).get("vm_name")
+    dest_vm = flow_log.get("dest_instance", {}).get("vm_name")
+    if src_vm:
+        payload["vm_name"] = src_vm
+    elif dest_vm:
+        payload["vm_name"] = dest_vm
 
     # Preserve nested structures for JSON path extraction in Webhook LogSource
     # Only include blocks that are present in the flow log
