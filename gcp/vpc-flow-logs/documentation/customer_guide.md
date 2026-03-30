@@ -252,9 +252,9 @@ Summary of steps:
 1. Create an API Only User with Logs & Traces Manage permission
 2. Generate a Bearer Token for that user
 3. Create a Webhook LogSource named "GCP VPC Flow Logs"
-4. Configure filters (SourceName contains "GCP-VPC-FlowLogs")
-5. Configure Log Fields for tag extraction (src_ip, dest_ip, protocol, etc.)
-6. Configure Resource Mapping (system.hostname from src_instance.vm_name)
+4. Configure filter: SourceName **Equal** `GCP-VPC-FlowLogs`
+5. Configure Log Fields using **Webhook Attribute** method for tag extraction (src_ip, dest_ip, protocol, etc.)
+6. Configure Resource Mapping: `system.gcp.resourcename` via **Webhook Attribute** on `vm_name`
 
 ---
 
@@ -448,11 +448,13 @@ gcloud functions logs read vpc-flowlogs-to-lm \
 
 **Causes and fixes:**
 
-1. **VM name mismatch:** The `src_instance.vm_name` in flow logs must match `system.hostname` of a monitored device in LM. Ensure GCP VMs are monitored with matching hostnames.
+1. **VM name mismatch:** The `vm_name` in the webhook payload must match `system.gcp.resourcename` of a monitored device in LM. For GCP cloud-discovered devices, use `system.gcp.resourcename` (not `system.hostname`, which contains a long composite string). Ensure the GCP project is added as a Cloud Account in LM so VMs are auto-discovered.
 
-2. **External traffic:** Flow logs from external sources (no `src_instance`) will always be deviceless. This is expected behavior.
+2. **External traffic:** Flow logs from external sources (no `src_instance`) fall back to `dest_instance.vm_name`. If neither is present, the log will be deviceless. This is expected for internet-only traffic.
 
-3. **Resource mapping not configured:** Verify the Webhook LogSource has the Resource Mapping set to `system.hostname = src_instance.vm_name`.
+3. **Resource mapping not configured:** Verify the Webhook LogSource has Resource Mapping set to `system.gcp.resourcename` via **Webhook Attribute** method on `vm_name`.
+
+4. **Non-string payload values:** LM webhook LogSources only process string values as metadata. If the Cloud Function sends numeric values (ports, protocol as integers), the LogSource will silently skip processing and logs will fall through to the default handler. The Cloud Function in this project stringifies all payload values.
 
 ### 10.4 Volume or Cost Too High
 

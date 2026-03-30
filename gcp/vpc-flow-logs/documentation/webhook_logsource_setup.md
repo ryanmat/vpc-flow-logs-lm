@@ -86,44 +86,36 @@ Click **Add Filter** and configure:
 
 | Attribute | Operation | Value |
 |-----------|-----------|-------|
-| SourceName | Contain | `GCP-VPC-FlowLogs` |
+| SourceName | Equal | `GCP-VPC-FlowLogs` |
 
-> If you deploy multiple Cloud Functions with different source names
-> (e.g., `GCP-VPC-FlowLogs-Production`, `GCP-VPC-FlowLogs-Staging`),
-> the "Contain" operator will match all of them.
+> Use "Equal" for exact source name matching. If you deploy multiple
+> Cloud Functions with different source names, create separate LogSources
+> for each, or use "Contain" with a common prefix.
 
 ### 3.4 Configure Log Fields (Tags)
 
-Log Fields extract values from the incoming JSON payload and create searchable tags in LM Logs. Each field maps a JSON path from the webhook payload to a named tag.
+Log Fields extract values from the incoming JSON payload and create searchable tags in LM Logs. The Cloud Function promotes key fields to the top level of the JSON payload as strings, so use the **Webhook Attribute** method (not Dynamic/JSON path).
+
+**Important:** LM webhook LogSources only process **string values** as metadata. The Cloud Function in this project stringifies all top-level payload values. Non-string types (integers, booleans, objects) are silently ignored by the LogSource field extractor.
 
 Click **Add Log Field** for each of the following:
 
-| Key | Method | Value (JSON Path) |
-|-----|--------|--------------------|
-| `src_ip` | Dynamic | `connection.src_ip` |
-| `dest_ip` | Dynamic | `connection.dest_ip` |
-| `src_port` | Dynamic | `connection.src_port` |
-| `dest_port` | Dynamic | `connection.dest_port` |
-| `protocol` | Dynamic | `connection.protocol` |
-| `bytes_sent` | Dynamic | `bytes_sent` |
-| `packets_sent` | Dynamic | `packets_sent` |
-| `reporter` | Dynamic | `reporter` |
-| `vm_name` | Dynamic | `src_instance.vm_name` |
-| `vpc_name` | Dynamic | `src_vpc.vpc_name` |
-| `subnet_name` | Dynamic | `src_vpc.subnetwork_name` |
-| `project_id` | Dynamic | `src_instance.project_id` |
+| Key | Method | Value |
+|-----|--------|-------|
+| `src_ip` | Webhook Attribute | `src_ip` |
+| `dest_ip` | Webhook Attribute | `dest_ip` |
+| `src_port` | Webhook Attribute | `src_port` |
+| `dest_port` | Webhook Attribute | `dest_port` |
+| `protocol` | Webhook Attribute | `protocol` |
+| `bytes_sent` | Webhook Attribute | `bytes_sent` |
+| `packets_sent` | Webhook Attribute | `packets_sent` |
+| `reporter` | Webhook Attribute | `reporter` |
+| `vm_name` | Webhook Attribute | `vm_name` |
+| `log_level` | Webhook Attribute | `Level` |
+| `resource_type` | Webhook Attribute | `resourceType` |
 
-**Optional GKE fields** (add if you have GKE traffic):
-
-| Key | Method | Value (JSON Path) |
-|-----|--------|--------------------|
-| `cluster_name` | Dynamic | `src_gke_details.cluster.cluster_name` |
-| `pod_name` | Dynamic | `src_gke_details.pod.pod_name` |
-| `pod_namespace` | Dynamic | `src_gke_details.pod.pod_namespace` |
-
-> Protocol values are numeric (IANA protocol numbers): 6 = TCP, 17 = UDP,
-> 1 = ICMP, 50 = ESP. You can create additional LogSource-level mappings
-> for human-readable names if desired.
+> Protocol values are numeric strings (IANA protocol numbers): "6" = TCP,
+> "17" = UDP, "1" = ICMP. All values are strings in the payload.
 
 ### 3.5 Configure Resource Mappings
 
@@ -133,17 +125,14 @@ Click **Add Resource Mapping** and configure:
 
 | Key | Method | Value |
 |-----|--------|-------|
-| `system.hostname` | Dynamic | `src_instance.vm_name` |
+| `system.gcp.resourcename` | Webhook Attribute | `vm_name` |
 
-> If `src_instance.vm_name` is not present in the payload (e.g., external
-> traffic with no source VM), the log will be stored as a "deviceless" log.
-> Deviceless logs are still searchable and alertable in LM Logs.
+**Critical notes on resource mapping:**
 
-**Alternative mapping strategies:**
-
-- Map by project: Use `src_instance.project_id` to group logs by GCP project
-- Map by VPC: Use `src_vpc.vpc_name` to group logs by VPC network
-- Map by subnet: Use `src_vpc.subnetwork_name` for subnet-level grouping
+- Use `system.gcp.resourcename` (not `system.hostname`). For GCP cloud-discovered devices, `system.hostname` contains a long composite string (e.g., `us-east1:project-id:computeengine:vm-name-hash`) that will never match the simple VM name from flow logs.
+- Use the **Webhook Attribute** method (not Static or RegexGroup). The Cloud Function promotes `vm_name` to a top-level string key for this purpose.
+- The GCP project must be added as a **Cloud Account** in LM for device auto-discovery. Without this, no devices exist to map to.
+- If `vm_name` is not present in the payload (external traffic with no associated VM), the log will be stored as a "deviceless" log. Deviceless logs are still searchable and alertable in LM Logs.
 
 ### 3.6 Save the LogSource
 
@@ -185,8 +174,9 @@ vm_name = "web-frontend-01"
 | Symptom | Likely Cause | Resolution |
 |---------|-------------|------------|
 | No logs appearing | Cloud Function not receiving messages | Check Cloud Function logs, verify Pub/Sub topic and sink |
-| Logs appear but no tags | Log Fields JSON paths incorrect | Verify JSON paths match the actual payload structure |
-| Logs not mapped to devices | Resource mapping key mismatch | Ensure `system.hostname` in LM matches `src_instance.vm_name` |
+| Logs appear but no tags | Log Fields method or values incorrect | Verify Webhook Attribute method with correct top-level key names |
+| Logs show under default logsource | Non-string payload values | Verify all payload values are strings. Integers/booleans cause silent LogSource skip. |
+| Logs not mapped to devices | Resource mapping key mismatch | Use `system.gcp.resourcename` (not `system.hostname`). Ensure GCP Cloud Account is added to LM. |
 | Logs mapped to wrong device | VM name collision | Use more specific mapping (e.g., project_id + vm_name) |
 
 ---
@@ -252,12 +242,12 @@ The Webhook LogSource filter `SourceName Contain GCP-VPC-FlowLogs` will match al
 
 ### 6.2 Excluding Noisy Traffic
 
-Add LogSource-level filters to exclude known noisy traffic patterns:
+Add LogSource-level filters to exclude known noisy traffic patterns. Use the top-level payload key names (not nested JSON paths):
 
 | Attribute | Operation | Value | Purpose |
 |-----------|-----------|-------|---------|
-| `connection.protocol` | Not Equal | `1` | Exclude ICMP |
-| `connection.dest_port` | Not Equal | `53` | Exclude DNS |
+| `protocol` | Not Equal | `1` | Exclude ICMP |
+| `dest_port` | Not Equal | `53` | Exclude DNS |
 
 ### 6.3 Custom Timestamp
 
