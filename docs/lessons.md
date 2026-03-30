@@ -52,6 +52,7 @@ Constraints and patterns discovered during implementation that apply to all futu
 - CloudEvent trigger functions receive CloudEvent objects in production, not dicts. `cloud_event.get("data")` works on test dicts but fails on CloudEvent objects. Use `cloud_event.data` property with a try/except fallback for test compatibility. Test fixtures should use actual CloudEvent objects (from cloudevents.http import CloudEvent) rather than plain dicts.
 - GCP Log Router sinks may require a re-update after initial creation before they start publishing. If Pub/Sub topic shows zero messages after sink creation and permissions are correct, re-run the sink update command with the same configuration.
 - For GCP cloud-discovered devices in LM, use `system.gcp.resourcename` for resource mapping, NOT `system.hostname`. LM assigns long composite hostnames to GCP devices (e.g., "us-east1:project-id:computeengine:vm-name-hash") that do not match the simple VM name in flow log payloads.
+- Each cloud provider has a different resource mapping key for webhook LogSources: AWS uses `system.aws.instanceid` (mapped from instance_id), GCP uses `system.gcp.resourcename` (mapped from vm_name), Azure uses `system.displayname` (mapped from resource name). Do not assume cross-cloud consistency.
 
 ## LM Webhook LogSource Behavior
 
@@ -60,6 +61,10 @@ Constraints and patterns discovered during implementation that apply to all futu
 - LM silently drops webhook logs when resource mapping fails. Resource mapping compares a webhook field value against a device property. If the values do not match (e.g., vm_name="flow-log-test" vs system.hostname="us-east1:project:computeengine:flow-log-test-hash"), the log is accepted but never attached to a device.
 - Do NOT delete and recreate LogSources to change configuration. Edit in place. Deleting creates a window where no LogSource matches, and any logs sent during that window are silently lost (202 accepted, never visible).
 - When the default LogSource handles logs but a custom LogSource does not, the issue is almost certainly in the custom LogSource's resource mapping or filter configuration, not in the webhook payload. The default LogSource is more permissive.
+- LM webhook LogSources ONLY process string values as metadata. Non-string payload values (integers, booleans, objects, arrays) cause the LogSource to silently skip field extraction. Logs fall through to the default webhook handler with no error or warning. AWS Lambda naturally sends strings (parsed from text format); GCP Cloud Logging preserves native JSON types (integers for ports, protocol, bytes). Always str() all top-level payload values before sending to LM webhook.
+- WebhookAttribute extraction only reads top-level JSON keys. Nested values (e.g., src_instance.vm_name inside a flow log record) are invisible to the LogSource. Promote needed nested values to top-level keys in the forwarder before sending. This matches the AWS pattern where instance_id, eni, srcaddr are all top-level.
+- Webhook LogSource appliesTo is NOT a valid configuration field. Webhook LogSources route by SourceName filter on the payload, not appliesTo. Do not waste time debugging appliesTo on webhook LogSources.
+- LogSource "Not in use" status means no logs have been successfully processed through it yet. It does NOT mean the LogSource is disabled or misconfigured. Status changes to active after the first successful log processing.
 
 ## GCP Deployment
 
@@ -78,3 +83,6 @@ Format: YYYY-MM-DD | category | brief description
 2026-03-25 | tool usage | LM Webhook LogSource resource mapping used system.hostname which contains a long composite string for GCP devices. Flow log vm_name field never matches. Fixed by using system.gcp.resourcename.
 2026-03-25 | tool usage | LM webhook returns 202 regardless of processing outcome. Assumed 202 meant logs were ingested. Logs were silently dropped due to resource mapping failure. Must verify in portal.
 2026-03-25 | tool usage | Deleted and recreated custom LogSource to change config. Logs sent during the gap were silently dropped. Should have edited in place.
+2026-03-26 | tool usage | GCP Cloud Function sent numeric payload values (ports, protocol as integers). LM webhook LogSource silently skipped field extraction for non-string values. Custom LogSource appeared broken; default LogSource handled logs because it does not depend on field extraction. Fixed by str() on all top-level values.
+2026-03-26 | tool usage | WebhookAttribute resource mapping field (vm_name) was nested inside src_instance/dest_instance objects. WebhookAttribute only reads top-level keys. Promoted vm_name to top-level in Cloud Function before sending.
+2026-03-26 | debugging | Multiple agents theorized empty appliesTo was causing LogSource to fail. Ryan found official LM docs confirming appliesTo is not a webhook LogSource field. Wasted investigation time on a non-issue. Always check official docs before accepting agent-generated theories.

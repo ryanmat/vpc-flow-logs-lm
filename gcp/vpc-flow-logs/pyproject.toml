@@ -14,6 +14,7 @@ dependencies = [
 dev = [
     "pytest>=9.0.2",
     "pytest-mock>=3.15.1",
+    "python-docx>=1.2.0",
     "responses>=0.26.0",
 ]
 
